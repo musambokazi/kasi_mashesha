@@ -1,35 +1,87 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import { useCart } from '../../context/CartContext';
 
 export default function Cart() {
     const router = useRouter();
-    const { cartItems, getTotalAmount, clearCart } = useCart();
+    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart } = useCart();
 
     const subtotal = getTotalAmount();
-    const deliveryFee = 15;
+    const deliveryFee = cartItems.length > 0 ? 15 : 0;
     const total = subtotal + deliveryFee;
+
+    const handleCheckout = () => {
+        Alert.alert(
+            "Confirm Order",
+            `Your total is R ${total}.00. Proceed to checkout?`,
+            [
+                { text: "Cancel", style: "cancel" },
+                { 
+                    text: "Confirm", 
+                    onPress: () => {
+                        alert('Order Placed!');
+                        clearCart();
+                        router.push('/history');
+                    } 
+                }
+            ]
+        );
+    };
 
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
             <ScrollView contentContainerStyle={styles.scrollContent}>
+                
+                {/* HEADER WITH CLEAR OPTION */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Your Cart</Text>
+                    {cartItems.length > 0 && (
+                        <TouchableOpacity onPress={clearCart} style={styles.clearButton}>
+                            <Ionicons name="trash-bin-outline" size={20} color="#800000" />
+                            <Text style={styles.clearText}>Clear Cart</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 <View style={styles.cartItems}>
                     {cartItems.length === 0 ? (
-                        <Text style={{ textAlign: 'center', color: '#757575', fontSize: 16 }}>Your cart is empty.</Text>
+                        <Text style={{ textAlign: 'center', color: '#757575', fontSize: 16, marginTop: 40 }}>
+                            Your cart is empty.
+                        </Text>
                     ) : (
                         cartItems.map((item) => (
                             <View key={item.id} style={styles.cartItem}>
-                                <Text style={styles.itemQty}>{item.quantity}x</Text>
+                                
+                                {/* REMOVE + ADD BUTTONS SIDE BY SIDE */}
+                                <View style={styles.quantityControls}>
+                                    <TouchableOpacity 
+                                        onPress={() => item.quantity > 1 && removeFromCart(item.id)}
+                                        style={styles.qtyBtn}
+                                    >
+                                        <Ionicons name="remove-circle-outline" size={28} color={item.quantity > 1 ? "#800000" : "#ccc"} />
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity 
+                                        onPress={() => addToCart(item)}
+                                        style={styles.qtyBtn}
+                                    >
+                                        <Ionicons name="add-circle-outline" size={28} color="#006400" />
+                                    </TouchableOpacity>
+
+                                    <Text style={styles.itemQty}>{item.quantity}</Text>
+                                </View>
+
+                                {/* ITEM DETAILS */}
                                 <View style={styles.itemDetails}>
-                                    <Text style={styles.itemName}>{item.name}</Text>
+                                    <View style={{ flex: 1 }}>
+                                        <Text style={styles.itemName}>{item.name}</Text>
+                                        <Text style={styles.unitPrice}>R {item.price}.00 each</Text>
+                                    </View>
                                     <Text style={styles.itemPrice}>R {item.price * item.quantity}.00</Text>
                                 </View>
                             </View>
@@ -59,8 +111,8 @@ export default function Cart() {
                 )}
 
                 {cartItems.length > 0 && (
-                    <TouchableOpacity style={styles.checkoutButton} onPress={() => { alert('Order Placed!'); clearCart(); router.push('/history'); }}>
-                        <Text style={styles.checkoutButtonText}>CHECKOUT</Text>
+                    <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+                        <Text style={styles.checkoutButtonText}>CHECKOUT (R {total}.00)</Text>
                     </TouchableOpacity>
                 )}
 
@@ -80,11 +132,23 @@ const styles = StyleSheet.create({
     header: {
         marginTop: 20,
         marginBottom: 30,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     headerTitle: {
         fontSize: 28,
         fontWeight: 'bold',
-        color: '#000080', // Navy Blue
+        color: '#000080',
+    },
+    clearButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    clearText: {
+        color: '#800000',
+        marginLeft: 5,
+        fontWeight: '600',
     },
     cartItems: {
         marginBottom: 30,
@@ -96,21 +160,34 @@ const styles = StyleSheet.create({
         borderBottomWidth: 1,
         borderBottomColor: '#F0F0F0',
     },
+    quantityControls: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginRight: 10,
+    },
+    qtyBtn: {
+        padding: 2,
+    },
     itemQty: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#006400', // Dark Green
-        marginRight: 15,
-        width: 30,
+        color: '#333',
+        marginLeft: 10,
     },
     itemDetails: {
         flex: 1,
         flexDirection: 'row',
         justifyContent: 'space-between',
+        alignItems: 'center',
     },
     itemName: {
         fontSize: 16,
         color: '#333',
+        fontWeight: '500',
+    },
+    unitPrice: {
+        fontSize: 12,
+        color: '#888',
     },
     itemPrice: {
         fontSize: 16,
@@ -144,7 +221,7 @@ const styles = StyleSheet.create({
         borderTopColor: '#E0E0E0',
     },
     grandTotalLabel: {
-        color: '#000080', // Navy Blue
+        color: '#000080',
         fontSize: 20,
         fontWeight: 'bold',
     },
@@ -154,14 +231,15 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     checkoutButton: {
-        backgroundColor: '#800000', // Maroon
-        paddingVertical: 15,
+        backgroundColor: '#800000',
+        paddingVertical: 18,
         borderRadius: 10,
         alignItems: 'center',
         elevation: 3,
+        marginBottom: 30,
     },
     checkoutButtonText: {
-        color: '#FFFFFF', // White
+        color: '#FFFFFF',
         fontSize: 18,
         fontWeight: 'bold',
         letterSpacing: 1,
