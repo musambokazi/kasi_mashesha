@@ -2,24 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Animated } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 const { width } = Dimensions.get('window');
+
+// Springs Coordinates
+const SPRINGS_REGION = {
+    latitude: -26.2500,
+    longitude: 28.4000,
+    latitudeDelta: 0.0922,
+    longitudeDelta: 0.0421,
+};
 
 export default function TrackOrder() {
     const { id } = useLocalSearchParams();
     const router = useRouter();
-    const [status, setStatus] = useState('Preparing'); // Preparing, Picked Up, On the way, Arriving
+    const [status, setStatus] = useState('Preparing');
     const [progress, setProgress] = useState(0.2);
     const [eta, setEta] = useState(15);
 
-    // Animation for car movement
-    const [carPosition] = useState(new Animated.Value(0));
+    // Mock Driver Location (Starting near Springs)
+    const [driverLoc, setDriverLoc] = useState({ latitude: -26.2550, longitude: 28.4050 });
 
     useEffect(() => {
-        // Simulate Status Updates
-        const statusIdx = 0;
+        // Simulate Status Updates && Driver Movement
         const statuses = ['Preparing', 'Picked Up', 'On the way', 'Arriving', 'Delivered'];
-
         let currentStep = 0;
 
         const interval = setInterval(() => {
@@ -29,17 +36,16 @@ export default function TrackOrder() {
                 setProgress((currentStep + 1) / statuses.length);
                 setEta(prev => Math.max(0, prev - 4));
 
-                // Move car
-                Animated.timing(carPosition, {
-                    toValue: currentStep * 50, // Move 50 units per step
-                    duration: 2000,
-                    useNativeDriver: true,
-                }).start();
+                // Move driver slightly towards "User" (Mock User at -26.2400, 28.3900)
+                setDriverLoc(prev => ({
+                    latitude: prev.latitude + 0.0030,
+                    longitude: prev.longitude - 0.0030,
+                }));
 
             } else {
                 clearInterval(interval);
             }
-        }, 4000); // Update every 4 seconds for demo
+        }, 4000);
 
         return () => clearInterval(interval);
     }, []);
@@ -48,28 +54,46 @@ export default function TrackOrder() {
         <View style={styles.container}>
             <StatusBar style="dark" />
 
-            {/* Map Area Mock */}
+            {/* Real Map with Springs Focus */}
             <View style={styles.mapArea}>
-                <View style={styles.gridLineVertical} />
-                <View style={styles.gridLineHorizontal} />
+                <MapView
+                    provider={PROVIDER_GOOGLE}
+                    style={StyleSheet.absoluteFill}
+                    initialRegion={SPRINGS_REGION}
+                >
+                    {/* Shop Marker */}
+                    <Marker
+                        coordinate={{ latitude: -26.2550, longitude: 28.4050 }}
+                        title="Vusi's Kota Joint"
+                        description="Picking up order..."
+                    >
+                        <View style={[styles.pin, styles.shopPin]}>
+                            <Text style={styles.pinText}>🏪</Text>
+                        </View>
+                    </Marker>
 
-                {/* Route Line */}
-                <View style={styles.routeLine} />
+                    {/* User Home Marker */}
+                    <Marker
+                        coordinate={{ latitude: -26.2300, longitude: 28.3800 }}
+                        title="My Home"
+                        description="45 Mandela St"
+                    >
+                        <View style={[styles.pin, styles.userPin]}>
+                            <Text style={styles.pinText}>🏠</Text>
+                        </View>
+                    </Marker>
 
-                {/* Shop Location */}
-                <View style={[styles.pin, styles.shopPin]}>
-                    <Text style={styles.pinText}>🏪</Text>
-                </View>
-
-                {/* User Location */}
-                <View style={[styles.pin, styles.userPin]}>
-                    <Text style={styles.pinText}>🏠</Text>
-                </View>
-
-                {/* Moving Car */}
-                <Animated.View style={[styles.carMarker, { transform: [{ translateY: carPosition }, { translateX: carPosition }] }]}>
-                    <Text style={{ fontSize: 24 }}>🚗</Text>
-                </Animated.View>
+                    {/* Moving Driver Marker */}
+                    <Marker
+                        coordinate={driverLoc}
+                        title="Sipho (Runner)"
+                        description="On the way!"
+                    >
+                        <View style={styles.carMarker}>
+                            <Text style={{ fontSize: 24 }}>🚗</Text>
+                        </View>
+                    </Marker>
+                </MapView>
             </View>
 
             {/* Driver Card & Status */}
@@ -122,37 +146,8 @@ const styles = StyleSheet.create({
     },
     mapArea: {
         flex: 1,
-        paddingTop: 50,
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        width: 2,
-        height: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-        left: '50%',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        height: 2,
-        width: '100%',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
-        top: '40%',
-    },
-    routeLine: {
-        position: 'absolute',
-        top: 120,
-        left: 80,
-        width: 200,
-        height: 200,
-        borderLeftWidth: 4,
-        borderBottomWidth: 4,
-        borderColor: '#000080', // Navy Blue Route
-        borderRadius: 20,
-        transform: [{ rotate: '45deg' }],
-        opacity: 0.3,
     },
     pin: {
-        position: 'absolute',
         width: 40,
         height: 40,
         justifyContent: 'center',
@@ -160,27 +155,23 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#FFF',
         elevation: 5,
+        borderWidth: 2,
+        borderColor: 'white',
     },
     shopPin: {
-        top: 100,
-        left: 50,
+        backgroundColor: '#006400', // Green
     },
     userPin: {
-        top: 350,
-        right: 50,
+        backgroundColor: '#000080', // Navy
     },
     pinText: {
         fontSize: 20,
     },
     carMarker: {
-        position: 'absolute',
-        top: 100,
-        left: 50,
-        width: 40,
-        height: 40,
+        width: 50,
+        height: 50,
         justifyContent: 'center',
         alignItems: 'center',
-        zIndex: 10,
     },
     bottomSheet: {
         backgroundColor: '#FFFFFF',
