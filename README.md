@@ -102,3 +102,26 @@ Kasi-Mashesha/
 ├─ App.tsx                      # Entry point
 ├─ package.json
 └─ README.md
+
+🚚 Delivery Logic & Driver Coordination
+
+​Responsibility: Handling real-time delivery data, location tracking, and driver-customer communication.
+​This module manages the critical "last mile" of the delivery process. It ensures that the driver has the correct coordinates and instructions, and prevents accidental order completion through a verification workflow.
+
+​Key Features
+​Geospatial Visualization: Integrated react-native-maps to render the driver's current position and the customer's drop-off point in real-time.
+​Customer-to-Driver Instructions: A dedicated communication bridge allowing users to provide specific delivery notes (e.g., gate codes, "don't ring bell") which are stored in the delivery state.
+
+​Action Verification Workflow: Implemented a two-step "Ask Before Finalizing" logic using native Alert controllers to ensure delivery status is only updated after explicit driver confirmation.
+​Responsive Input Handling: Utilized KeyboardAvoidingView to ensure the interface remains functional on Android devices during text entry.
+
+​Technical Implementation (TypeScript)
+
+​The module is built with a focus on Type Safety and Clean Architecture:
+
+​Strict Typing: Used TypeScript Interfaces (Location, DeliveryData) to ensure coordinate data (\text{latitude/longitude}) is always valid, preventing runtime crashes during map rendering.
+
+​State Synchronization: Managed via React Hooks (useState). The driverNotes state captures user input and bundles it with coordinate data for the final API payload.
+
+​UI/UX Patterns: * Visual Feedback: The "Finalize" button includes a loading state (isFinalizing) to prevent double-submissions.
+​Conditional Rendering: The map uses a Polyline to visually connect the driver and the destination, improving the spatial awareness of the user
