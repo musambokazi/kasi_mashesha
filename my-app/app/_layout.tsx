@@ -1,13 +1,21 @@
 import { Stack } from "expo-router";
-import { stackRouterOverride } from "expo-router/build/layouts/StackClient";
-import { StackScreen } from "react-native-screens";
 
 export default function RootLayout() {
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{title:"Home"}}/>
-      <Stack.Screen name="register" options={{title:"Register"}}/>
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#FFFFFF', // White
+        },
+        headerTintColor: '#000080', // Navy Blue
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: "Welcome", headerShown: false }} />
+      <Stack.Screen name="log_in" options={{ title: "Login" }} />
+      <Stack.Screen name="register" options={{ title: "Register" }} />
     </Stack>
-    
-  )
+  );
 }
