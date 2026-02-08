@@ -12,7 +12,20 @@ export default function Login() {
     const handleLogin = () => {
         // Implement login logic here
         console.log('Login as', role, email, password);
-        // Navigate to dashboard or home based on role
+
+        switch (role) {
+            case 'client':
+                router.replace('/client/home');
+                break;
+            case 'store':
+                router.replace('/store/home');
+                break;
+            case 'runner':
+                router.replace('/runner/home');
+                break;
+            default:
+                console.error('Unknown role');
+        }
     };
 
     return (
