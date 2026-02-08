@@ -6,35 +6,35 @@ interface Props {}
 const Login: React.FC<Props> = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState('business');
+  const [driverLicense, setDriverLicense] = useState('');
+  const [vehicleNumber, setVehicleNumber] = useState('');
 
   const handleLogin = () => {
-    if (!email || !password || !role) {
+    if (!email || !password) {
       alert('Please fill in all fields');
       return;
     }
-    // Handle login logic here
-    console.log('Email:', email);
-    console.log('Password:', password);
-    console.log('Role:', role);
+    if (role === 'business') {
+      // Handle business owner login logic here
+      console.log('Business Owner Email:', email);
+      console.log('Business Owner Password:', password);
+    } else if (role === 'driver') {
+      if (!driverLicense || !vehicleNumber) {
+        alert('Please fill in all fields');
+        return;
+      }
+      // Handle driver login logic here
+      console.log('Driver Email:', email);
+      console.log('Driver Password:', password);
+      console.log('Driver License:', driverLicense);
+      console.log('Vehicle Number:', vehicleNumber);
+    }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        value={email}
-        onChangeText={(text) => setEmail(text)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Password"
-        value={password}
-        onChangeText={(text) => setPassword(text)}
-        secureTextEntry={true}
-      />
       <View style={styles.roleContainer}>
         <TouchableOpacity
           style={[styles.roleButton, role === 'business' && styles.selectedRole]}
@@ -49,6 +49,35 @@ const Login: React.FC<Props> = () => {
           <Text style={styles.roleText}>Driver</Text>
         </TouchableOpacity>
       </View>
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={(text) => setEmail(text)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={(text) => setPassword(text)}
+        secureTextEntry={true}
+      />
+      {role === 'driver' && (
+        <View>
+          <TextInput
+            style={styles.input}
+            placeholder="Driver License"
+            value={driverLicense}
+            onChangeText={(text) => setDriverLicense(text)}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Vehicle Number"
+            value={vehicleNumber}
+            onChangeText={(text) => setVehicleNumber(text)}
+          />
+        </View>
+      )}
       <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
@@ -110,5 +139,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export default Login;
 
 
