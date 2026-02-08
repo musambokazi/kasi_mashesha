@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useOrders } from '../../context/OrderContext';
@@ -7,61 +7,92 @@ import { useOrders } from '../../context/OrderContext';
 export default function RunnerHome() {
     const router = useRouter();
     const { getOrdersByRole } = useOrders();
-    const [isOnline, setIsOnline] = useState(false);
 
-    // Get orders that are Ready for Pickup or already assigned to this runner (if we had auth)
+    // Get orders that are Ready for Pickup or already assigned to this runner
     const availableDeliveries = getOrdersByRole('runner');
+
+    // Calculate simulated earnings (mock)
+    const todayEarnings = 450;
+    const completedTrips = 12;
 
     return (
         <View style={styles.container}>
-            <StatusBar style="dark" />
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Delivery Hub</Text>
-                    <Text style={styles.headerSubtitle}>Ready to move?</Text>
-                </View>
+            <StatusBar style="light" />
 
-                <View style={styles.statusCard}>
-                    <Text style={styles.statusText}>{isOnline ? 'YOU ARE ONLINE' : 'YOU ARE OFFLINE'}</Text>
-                    <Switch
-                        trackColor={{ false: "#767577", true: "#006400" }} // Dark Green
-                        thumbColor={isOnline ? "#FFD700" : "#f4f3f4"} // Gold
-                        onValueChange={() => setIsOnline(!isOnline)}
-                        value={isOnline}
-                    />
+            {/* Header / Dashboard Summary */}
+            <View style={styles.dashboardHeader}>
+                <View>
+                    <Text style={styles.greeting}>Hello, Runner</Text>
+                    <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}</Text>
                 </View>
+                <View style={styles.profileIcon}>
+                    <Text style={styles.profileText}>R</Text>
+                </View>
+            </View>
+
+            {/* Earnings Card */}
+            <View style={styles.earningsCard}>
+                <View style={styles.earningsInfo}>
+                    <Text style={styles.earningsLabel}>Today's Earnings</Text>
+                    <Text style={styles.earningsValue}>R {todayEarnings}.00</Text>
+                </View>
+                <View style={styles.tripInfo}>
+                    <Text style={styles.tripCount}>{completedTrips}</Text>
+                    <Text style={styles.tripLabel}>Trips</Text>
+                </View>
+            </View>
+
+            <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 <View style={styles.sectionHeader}>
-                    <Text style={styles.sectionTitle}>Available Deliveries</Text>
+                    <Text style={styles.sectionTitle}>New Requests ({availableDeliveries.length})</Text>
                 </View>
 
-                {isOnline ? (
-                    availableDeliveries.length === 0 ? (
-                        <Text style={{ textAlign: 'center', marginTop: 20, color: '#757575' }}>No deliveries available.</Text>
-                    ) : (
-                        availableDeliveries.map((order) => (
-                            <View key={order.id} style={styles.deliveryCard}>
-                                <View style={styles.deliveryHeader}>
-                                    <Text style={styles.restaurantName}>{order.shopName}</Text>
-                                    <Text style={styles.deliveryDistance}>2.5 km</Text>
-                                </View>
-                                <Text style={styles.deliveryAddress}>To: {order.customerName}</Text>
-                                <Text style={styles.deliveryEarn}>Earn: R 25.00</Text>
-                                <TouchableOpacity
-                                    style={styles.acceptButton}
-                                    onPress={() => router.push(`/runner/delivery/${order.id}`)}
-                                >
-                                    <Text style={styles.acceptButtonText}>
-                                        {order.status === 'On the way' ? 'CONTINUE DELIVERY' : 'ACCEPT DELIVERY'}
-                                    </Text>
-                                </TouchableOpacity>
-                            </View>
-                        ))
-                    )
-                ) : (
-                    <View style={styles.offlineState}>
-                        <Text style={styles.offlineText}>Go online to see delivery requests.</Text>
+                {availableDeliveries.length === 0 ? (
+                    <View style={styles.emptyState}>
+                        <Text style={styles.emptyTitle}>No deliveries yet</Text>
+                        <Text style={styles.emptySubtitle}>Stay tuned! New orders will appear here.</Text>
                     </View>
+                ) : (
+                    availableDeliveries.map((order) => (
+                        <View key={order.id} style={styles.deliveryCard}>
+                            <View style={styles.deliveryHeader}>
+                                <View style={styles.badgeContainer}>
+                                    <Text style={styles.badgeText}>NEW REQUEST</Text>
+                                </View>
+                                <Text style={styles.deliveryEarn}>R 25.00</Text>
+                            </View>
+
+                            <View style={styles.routeContainer}>
+                                <View style={styles.routePoint}>
+                                    <View style={[styles.dot, styles.pickupDot]} />
+                                    <View style={styles.addressContainer}>
+                                        <Text style={styles.routeLabel}>PICK UP</Text>
+                                        <Text style={styles.restaurantName}>{order.shopName}</Text>
+                                        <Text style={styles.distanceText}>2.5 km away</Text>
+                                    </View>
+                                </View>
+                                <View style={styles.routeLine} />
+                                <View style={styles.routePoint}>
+                                    <View style={[styles.dot, styles.dropoffDot]} />
+                                    <View style={styles.addressContainer}>
+                                        <Text style={styles.routeLabel}>DROP OFF</Text>
+                                        <Text style={styles.customerName}>{order.customerName}</Text>
+                                        <Text style={styles.distanceText}>4.2 km trip</Text>
+                                    </View>
+                                </View>
+                            </View>
+
+                            <TouchableOpacity
+                                style={styles.acceptButton}
+                                onPress={() => router.push(`/runner/delivery/${order.id}`)}
+                            >
+                                <Text style={styles.acceptButtonText}>
+                                    {order.status === 'On the way' ? 'CONTINUE DELIVERY' : 'ACCEPT DELIVERY'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))
                 )}
 
             </ScrollView>
@@ -72,102 +103,203 @@ export default function RunnerHome() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#F5F5F5',
     },
-    scrollContent: {
-        padding: 20,
-    },
-    header: {
-        marginTop: 20,
-        marginBottom: 30,
-    },
-    headerTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#000080', // Navy Blue
-        marginBottom: 5,
-    },
-    headerSubtitle: {
-        fontSize: 16,
-        color: '#757575',
-    },
-    statusCard: {
-        backgroundColor: '#F9F9F9',
-        padding: 20,
-        borderRadius: 15,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
+    dashboardHeader: {
+        backgroundColor: '#006400', // Dark Green
+        paddingTop: 60,
+        paddingBottom: 80,
+        paddingHorizontal: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 30,
     },
-    statusText: {
+    greeting: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#FFFFFF',
+    },
+    date: {
+        color: 'rgba(255, 255, 255, 0.8)',
+        marginTop: 5,
+        fontSize: 14,
+    },
+    profileIcon: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    profileText: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+        fontSize: 18,
+    },
+    earningsCard: {
+        backgroundColor: '#FFFFFF',
+        marginHorizontal: 20,
+        marginTop: -40,
+        borderRadius: 15,
+        padding: 20,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+    },
+    earningsInfo: {
+        flex: 1,
+    },
+    earningsLabel: {
+        color: '#757575',
+        fontSize: 12,
+        fontWeight: '600',
+        textTransform: 'uppercase',
+    },
+    earningsValue: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 5,
+    },
+    tripInfo: {
+        alignItems: 'center',
+        borderLeftWidth: 1,
+        borderLeftColor: '#EEEEEE',
+        paddingLeft: 20,
+    },
+    tripCount: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#006400',
+    },
+    tripLabel: {
+        color: '#757575',
+        fontSize: 12,
+    },
+    scrollContent: {
+        padding: 20,
+        paddingBottom: 40,
+    },
+    sectionHeader: {
+        marginBottom: 15,
+        marginTop: 10,
+    },
+    sectionTitle: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
-    sectionHeader: {
-        marginBottom: 15,
-        borderBottomWidth: 1,
-        borderBottomColor: '#EEEEEE',
-        paddingBottom: 10,
+    emptyState: {
+        alignItems: 'center',
+        padding: 40,
     },
-    sectionTitle: {
-        fontSize: 20,
+    emptyTitle: {
+        fontSize: 18,
         fontWeight: 'bold',
-        color: '#000080', // Navy Blue
+        color: '#333',
+        marginTop: 20,
+    },
+    emptySubtitle: {
+        color: '#757575',
+        textAlign: 'center',
+        marginTop: 10,
     },
     deliveryCard: {
         backgroundColor: '#FFFFFF',
-        padding: 20,
         borderRadius: 15,
-        borderWidth: 1,
-        borderColor: '#000080', // Navy Blue
-        elevation: 3,
-        marginBottom: 15,
+        padding: 20,
+        marginBottom: 20,
+        elevation: 2,
     },
     deliveryHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 10,
+        alignItems: 'center',
+        marginBottom: 20,
     },
-    restaurantName: {
+    badgeContainer: {
+        backgroundColor: '#E8F5E9',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 5,
+    },
+    badgeText: {
+        color: '#006400',
+        fontWeight: 'bold',
+        fontSize: 10,
+    },
+    deliveryEarn: {
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
     },
-    deliveryDistance: {
-        color: '#757575',
+    routeContainer: {
+        marginBottom: 20,
     },
-    deliveryAddress: {
-        fontSize: 16,
-        color: '#555',
-        marginBottom: 10,
+    routePoint: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
     },
-    deliveryEarn: {
-        fontSize: 20,
+    dot: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+        marginTop: 5,
+        marginRight: 15,
+    },
+    pickupDot: {
+        backgroundColor: '#333',
+    },
+    dropoffDot: {
+        backgroundColor: '#006400',
+    },
+    routeLine: {
+        width: 2,
+        height: 30,
+        backgroundColor: '#E0E0E0',
+        marginLeft: 5,
+        marginVertical: 5,
+    },
+    addressContainer: {
+        flex: 1,
+    },
+    routeLabel: {
+        fontSize: 10,
+        color: '#999',
         fontWeight: 'bold',
-        color: '#006400', // Dark Green
-        marginBottom: 15,
+        marginBottom: 2,
+    },
+    restaurantName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    customerName: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    distanceText: {
+        color: '#757575',
+        fontSize: 12,
+        marginTop: 2,
     },
     acceptButton: {
         backgroundColor: '#000080', // Navy Blue
-        paddingVertical: 12,
-        borderRadius: 8,
+        paddingVertical: 15,
+        borderRadius: 10,
         alignItems: 'center',
     },
     acceptButtonText: {
         color: '#FFFFFF',
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    offlineState: {
-        padding: 40,
-        alignItems: 'center',
-    },
-    offlineText: {
-        color: '#999',
-        fontStyle: 'italic',
+        letterSpacing: 1,
     },
 });
