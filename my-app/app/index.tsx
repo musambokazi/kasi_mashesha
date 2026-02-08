@@ -13,7 +13,7 @@ export default function WelcomeScreen() {
       <View style={styles.background}>
         <View style={styles.contentContainer}>
           <Image
-            source={require('../assets/images/kasi-logo.png')} // Kasi Logo
+            source={require('../assets/images/logo.png')} // Kasi Logo
             style={styles.logo}
             resizeMode="contain"
           />
