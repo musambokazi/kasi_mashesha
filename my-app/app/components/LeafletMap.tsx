@@ -22,9 +22,11 @@ interface LeafletMapProps {
     };
     markers?: Marker[];
     routeCoordinates?: LatLng[];
+    mapCenter?: LatLng;
+    onMapPress?: (coordinate: LatLng) => void;
 }
 
-export default function LeafletMap({ initialRegion, markers = [], routeCoordinates = [] }: LeafletMapProps) {
+export default function LeafletMap({ initialRegion, markers = [], routeCoordinates = [], mapCenter, onMapPress }: LeafletMapProps) {
     const webViewRef = useRef<WebView>(null);
 
     // Initial Map HTML
@@ -72,7 +74,23 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                 iconAnchor: [12, 41]
             });
 
-            // Custom colored icons (using filters/hue-rotate would be complex, simplified sourcing or just emoji markers might be better for now, keeping simple default)
+            // Handle Map Click
+            map.on('click', function(e) {
+                var data = {
+                    type: 'mapPress',
+                    coordinate: {
+                        latitude: e.latlng.lat,
+                        longitude: e.latlng.lng
+                    }
+                };
+                // Send to React Native
+                if (window.ReactNativeWebView) {
+                    window.ReactNativeWebView.postMessage(JSON.stringify(data));
+                } else {
+                    // Fallback using window.postMessage if ReactNativeWebView is not defined
+                    // window.postMessage(JSON.stringify(data)); 
+                }
+            });
 
             function updateMap(data) {
                 // Clear existing
@@ -94,6 +112,11 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                     var latlngs = data.routeCoordinates.map(c => [c.latitude, c.longitude]);
                     routeLine = L.polyline(latlngs, {color: 'blue'}).addTo(map);
                     map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+                }
+
+                // Center Map
+                if (data.mapCenter) {
+                    map.setView([data.mapCenter.latitude, data.mapCenter.longitude], 15);
                 }
             }
 
@@ -117,12 +140,24 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
         if (webViewRef.current) {
             const data = {
                 markers,
-                routeCoordinates
+                routeCoordinates,
+                mapCenter
             };
             webViewRef.current.postMessage(JSON.stringify(data));
             webViewRef.current.injectJavaScript(`updateMap(${JSON.stringify(data)})`);
         }
-    }, [markers, routeCoordinates]);
+    }, [markers, routeCoordinates, mapCenter]);
+
+    const handleMessage = (event: any) => {
+        try {
+            const data = JSON.parse(event.nativeEvent.data);
+            if (data.type === 'mapPress' && onMapPress) {
+                onMapPress(data.coordinate);
+            }
+        } catch (e) {
+            console.error("Failed to parse message from WebView", e);
+        }
+    };
 
     return (
         <View style={styles.container}>
@@ -133,6 +168,7 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                 style={styles.map}
                 startInLoadingState={true}
                 renderLoading={() => <ActivityIndicator size="large" color="#000080" style={StyleSheet.absoluteFill} />}
+                onMessage={handleMessage}
             />
         </View>
     );

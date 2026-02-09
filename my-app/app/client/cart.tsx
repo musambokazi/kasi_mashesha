@@ -8,25 +8,30 @@ import { useCart } from '../../context/CartContext';
 
 export default function Cart() {
     const router = useRouter();
-    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart } = useCart();
+    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress } = useCart();
 
     const subtotal = getTotalAmount();
     const deliveryFee = cartItems.length > 0 ? 15 : 0;
     const total = subtotal + deliveryFee;
 
     const handleCheckout = () => {
+        if (!deliveryAddress) {
+            Alert.alert("Delivery Location Required", "Please set your delivery location before checking out.");
+            return;
+        }
+
         Alert.alert(
             "Confirm Order",
-            `Your total is R ${total}.00. Proceed to checkout?`,
+            `Total Amount: R ${total}.00\n\nDelivery Location:\n${deliveryAddress}\n\nProceed with your order?`,
             [
                 { text: "Cancel", style: "cancel" },
-                { 
-                    text: "Confirm", 
+                {
+                    text: "Confirm Order",
                     onPress: () => {
-                        alert('Order Placed!');
+                        Alert.alert("Order Received!", "The runner is now on the way to your location.");
                         clearCart();
                         router.push('/history');
-                    } 
+                    }
                 }
             ]
         );
@@ -36,7 +41,7 @@ export default function Cart() {
         <View style={styles.container}>
             <StatusBar style="dark" />
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                
+
                 {/* HEADER WITH CLEAR OPTION */}
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Your Cart</Text>
@@ -56,17 +61,17 @@ export default function Cart() {
                     ) : (
                         cartItems.map((item) => (
                             <View key={item.id} style={styles.cartItem}>
-                                
+
                                 {/* REMOVE + ADD BUTTONS SIDE BY SIDE */}
                                 <View style={styles.quantityControls}>
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         onPress={() => item.quantity > 1 && removeFromCart(item.id)}
                                         style={styles.qtyBtn}
                                     >
                                         <Ionicons name="remove-circle-outline" size={28} color={item.quantity > 1 ? "#800000" : "#ccc"} />
                                     </TouchableOpacity>
 
-                                    <TouchableOpacity 
+                                    <TouchableOpacity
                                         onPress={() => addToCart(item)}
                                         style={styles.qtyBtn}
                                     >
@@ -104,14 +109,50 @@ export default function Cart() {
                             <Text style={styles.grandTotalValue}>R {total}.00</Text>
                         </View>
 
-                        <TouchableOpacity onPress={() => router.push('/location/map')} style={{ marginTop: 15 }}>
-                            <Text style={{ color: '#006400', fontWeight: 'bold', textAlign: 'center' }}>📍 Set Delivery Location</Text>
-                        </TouchableOpacity>
+                        {/* DELIVERY LOCATION SECTION */}
+                        <View style={{ marginTop: 20, borderTopWidth: 1, borderTopColor: '#E0E0E0', paddingTop: 15 }}>
+                            <Text style={{ color: '#757575', marginBottom: 5 }}>Delivery Location:</Text>
+                            {deliveryAddress ? (
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                                    <Ionicons name="location-sharp" size={20} color="#006400" />
+                                    <Text style={{ marginLeft: 5, color: '#333', fontWeight: 'bold', flex: 1 }}>
+                                        {deliveryAddress}
+                                    </Text>
+                                </View>
+                            ) : (
+                                <Text style={{ color: '#800000', marginBottom: 10, fontStyle: 'italic' }}>
+                                    No location set
+                                </Text>
+                            )}
+
+                            <TouchableOpacity
+                                onPress={() => router.push({ pathname: '/location/map', params: { picking: 'true' } })}
+                                style={{
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    paddingVertical: 10,
+                                    backgroundColor: '#E8F5E9',
+                                    borderRadius: 8,
+                                    borderWidth: 1,
+                                    borderColor: '#C8E6C9'
+                                }}
+                            >
+                                <Ionicons name={deliveryAddress ? "pencil" : "map"} size={18} color="#006400" />
+                                <Text style={{ color: '#006400', fontWeight: 'bold', marginLeft: 8 }}>
+                                    {deliveryAddress ? "Change Location" : "Set Delivery Location"}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
                 )}
 
                 {cartItems.length > 0 && (
-                    <TouchableOpacity style={styles.checkoutButton} onPress={handleCheckout}>
+                    <TouchableOpacity
+                        style={[styles.checkoutButton, !deliveryAddress && { backgroundColor: '#ccc' }]}
+                        onPress={handleCheckout}
+                        disabled={!deliveryAddress}
+                    >
                         <Text style={styles.checkoutButtonText}>CHECKOUT (R {total}.00)</Text>
                     </TouchableOpacity>
                 )}

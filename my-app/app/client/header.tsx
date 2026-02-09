@@ -34,7 +34,10 @@ export default function Header({ name = 'User', imageUri }: { name?: string; ima
 
   return (
     <View style={styles.header}>
-      <Text style={styles.title}>App Title</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <Image source={require('../../assets/images/KasiLogo.png')} style={{ width: 30, height: 30, marginRight: 10 }} resizeMode="contain" />
+        <Text style={styles.title}>Kasi Mashesha</Text>
+      </View>
 
       <TouchableOpacity onPress={pickImage}>
         {image ? (

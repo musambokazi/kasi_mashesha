@@ -33,6 +33,11 @@ export default function Login() {
             <StatusBar style="dark" />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
+                    <Image
+                        source={require('../assets/images/KasiLogo.png')}
+                        style={{ width: 100, height: 100, marginBottom: 20 }}
+                        resizeMode="contain"
+                    />
                     <Text style={styles.headerTitle}>Welcome Back</Text>
                     <Text style={styles.headerSubtitle}>Sign in to continue</Text>
                 </View>
