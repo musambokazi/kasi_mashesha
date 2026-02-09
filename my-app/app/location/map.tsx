@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
     },
     mapContainer: {
         flex: 1,
-        marginBottom: 340, // Increased for tipping
+        marginBottom: 180,
     },
     searchContainer: {
         position: 'absolute',
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         width: '100%',
-        height: 340, // Increased for tipping
+        height: 180,
         backgroundColor: '#FFFFFF',
         padding: 20,
         borderTopLeftRadius: 25,
@@ -441,69 +441,8 @@ const styles = StyleSheet.create({
         color: '#333',
         fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 20,
         minHeight: 40, // Ensure space even while loading
-    },
-    tippingContainer: {
-        marginBottom: 15,
-    },
-    tippingTitle: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginBottom: 8,
-        color: '#333',
-    },
-    tipOptionsRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 10,
-    },
-    tipButton: {
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 20,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        backgroundColor: '#F5F5F5',
-    },
-    tipButtonSelected: {
-        backgroundColor: '#006400',
-        borderColor: '#006400',
-    },
-    tipButtonText: {
-        fontSize: 12,
-        color: '#333',
-    },
-    tipButtonTextSelected: {
-        color: '#FFFFFF',
-        fontWeight: 'bold',
-    },
-    customTipContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        height: 40,
-        marginBottom: 8,
-    },
-    currencyPrefix: {
-        fontSize: 16,
-        color: '#333',
-        marginRight: 5,
-    },
-    customTipInput: {
-        flex: 1,
-        fontSize: 16,
-        color: '#333',
-    },
-    summaryText: {
-        fontSize: 14,
-        color: '#006400', // Dark Green to match theme
-        fontWeight: 'bold',
-        textAlign: 'right',
-        marginBottom: 5,
     },
     confirmButton: {
         backgroundColor: '#006400',

@@ -9,18 +9,15 @@ import { useCart } from '../../context/CartContext';
 
 export default function Cart() {
     const router = useRouter();
-    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress, tip } = useCart();
+    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress } = useCart();
 
     // Modal States
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
 
-    // Correctly separate tip from subtotal (which currently includes tip in CartContext)
-    // Or simpler: Calculate pure subtotal (items only) here
-    const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const subtotal = itemTotal; // In Cart UI, let's call items "Subtotal"
+    const subtotal = getTotalAmount();
     const deliveryFee = cartItems.length > 0 ? 15 : 0;
-    const total = subtotal + deliveryFee + tip; // Total + Delivery + Tip
+    const total = subtotal + deliveryFee;
 
     const handleCheckoutPress = () => {
         if (!deliveryAddress) {
@@ -136,15 +133,9 @@ export default function Cart() {
                         <View style={styles.totalRow}>
                             <Text style={styles.totalValue}>R {deliveryFee}.00</Text>
                         </View>
-                        {tip > 0 && (
-                            <View style={styles.totalRow}>
-                                <Text style={styles.totalLabel}>Driver Tip</Text>
-                                <Text style={styles.totalValue}>R {tip.toFixed(2)}</Text>
-                            </View>
-                        )}
                         <View style={[styles.totalRow, styles.grandTotal]}>
                             <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>R {total.toFixed(2)}</Text>
+                            <Text style={styles.grandTotalValue}>R {total}.00</Text>
                         </View>
 
                         {/* DELIVERY LOCATION SECTION */}

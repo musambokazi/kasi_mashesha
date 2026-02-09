@@ -15,8 +15,6 @@ type CartContextType = {
     getTotalAmount: () => number;
     deliveryAddress: string | null;
     setDeliveryAddress: (address: string | null) => void;
-    tip: number;
-    setTip: (amount: number) => void;
 };
 
 const CartContext = createContext<CartContextType>({
@@ -27,8 +25,6 @@ const CartContext = createContext<CartContextType>({
     getTotalAmount: () => 0,
     deliveryAddress: null,
     setDeliveryAddress: () => { },
-    tip: 0,
-    setTip: () => { },
 });
 
 export const useCart = () => useContext(CartContext);
@@ -36,7 +32,6 @@ export const useCart = () => useContext(CartContext);
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [cartItems, setCartItems] = useState<CartItem[]>([]);
     const [deliveryAddress, setDeliveryAddress] = useState<string | null>(null);
-    const [tip, setTip] = useState<number>(0);
 
     const addToCart = (item: CartItem) => {
         // ... (rest of addToCart implementation stays implicitly same if not touched, but since I'm replacing the provider block I need to be careful)
@@ -61,15 +56,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const clearCart = () => {
         setCartItems([]);
         setDeliveryAddress(null);
-        setTip(0);
     };
 
     const getTotalAmount = () => {
-        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0) + tip;
+        return cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
     };
 
     return (
-        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, getTotalAmount, deliveryAddress, setDeliveryAddress, tip, setTip }}>
+        <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, clearCart, getTotalAmount, deliveryAddress, setDeliveryAddress }}>
             {children}
         </CartContext.Provider>
     );
