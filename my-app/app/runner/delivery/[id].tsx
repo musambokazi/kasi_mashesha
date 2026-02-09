@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import LeafletMap from '../../../components/LeafletMap';
+import LeafletMap from '../../components/LeafletMap';
 import { useOrders } from '../../../context/OrderContext';
 
 export default function DeliveryDetails() {
