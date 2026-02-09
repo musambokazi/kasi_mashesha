@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, TextInput, FlatList, Keyboard, ActivityIndicator } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import LeafletMap from '../components/LeafletMap';
 import { useCart } from '../../context/CartContext';
+import CustomModal from '../components/CustomModal';
+
+interface Suggestion {
+    place_id: number;
+    display_name: string;
+    lat: string;
+    lon: string;
+}
 
 export default function LocationMap() {
     const router = useRouter();
@@ -11,10 +19,14 @@ export default function LocationMap() {
     const isPicking = params.picking === 'true';
     const { setDeliveryAddress } = useCart();
 
+    const [modalVisible, setModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+
     const [selectedLocation, setSelectedLocation] = useState({
         latitude: -26.2343, // Soweto coordinates
         longitude: 27.8546,
     });
+    const [selectedAddress, setSelectedAddress] = useState<string>("Locating...");
 
     const initialRegion = {
         latitude: -26.2343,
@@ -30,42 +42,107 @@ export default function LocationMap() {
         }
     ];
 
-    const handleConfirm = () => {
-        const address = `Lat: ${selectedLocation.latitude.toFixed(4)}, Lng: ${selectedLocation.longitude.toFixed(4)}`;
+    // Reverse Geocoding Function
+    const reverseGeocode = async (lat: number, lon: number) => {
+        setSelectedAddress("Fetching address...");
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`, {
+                headers: { 'User-Agent': 'KasiMasheshaApp/1.0' }
+            });
+            const data = await response.json();
+            if (data && data.display_name) {
+                // Formatting address to be shorter if needed, or use full
+                const cleanAddress = data.display_name.split(',').slice(0, 3).join(',');
+                setSelectedAddress(cleanAddress);
+            } else {
+                setSelectedAddress("Unknown Location");
+            }
+        } catch (error) {
+            console.error("Reverse geocode error:", error);
+            setSelectedAddress("Address not found");
+        }
+    };
+
+    // Initial Reverse Geocode
+    useEffect(() => {
+        reverseGeocode(selectedLocation.latitude, selectedLocation.longitude);
+    }, []);
+
+    const handleConfirmPress = () => {
+        setModalVisible(true);
+    };
+
+    const handleConfirmAction = () => {
+        setModalVisible(false);
+        const addressToSave = selectedAddress || `Lat: ${selectedLocation.latitude.toFixed(4)}, Lng: ${selectedLocation.longitude.toFixed(4)}`;
 
         if (isPicking) {
-            Alert.alert(
-                "Confirmed!",
-                "Your location has been successfully pinned. The driver will find you exactly here.",
-                [
-                    {
-                        text: "Great",
-                        onPress: () => {
-                            setDeliveryAddress(address);
-                            router.back();
-                        }
-                    }
-                ]
-            );
+            setSuccessModalVisible(true);
         } else {
-            Alert.alert("Location Confirmed", `Address: ${address}`);
+            Alert.alert("Location Confirmed", `Address: ${addressToSave}`);
         }
+    };
+
+    const handleSuccessClose = () => {
+        setSuccessModalVisible(false);
+        const addressToSave = selectedAddress || `Lat: ${selectedLocation.latitude.toFixed(4)}, Lng: ${selectedLocation.longitude.toFixed(4)}`;
+        setDeliveryAddress(addressToSave);
+        router.back();
     };
 
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+
+    // Debounce search
+    useEffect(() => {
+        const delayDebounceFn = setTimeout(() => {
+            if (searchQuery.length > 2 && showSuggestions) {
+                fetchSuggestions(searchQuery);
+            } else if (searchQuery.length === 0) {
+                setSuggestions([]);
+            }
+        }, 1000);
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchQuery, showSuggestions]);
+
+    const fetchSuggestions = async (query: string) => {
+        setIsSearching(true);
+        try {
+            // Added countrycodes=za for South Africa restriction
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&addressdetails=1&limit=5&countrycodes=za`, {
+                headers: { 'User-Agent': 'KasiMasheshaApp/1.0' }
+            });
+            const data = await response.json();
+            setSuggestions(data || []);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    const handleSelectSuggestion = (item: Suggestion) => {
+        const lat = parseFloat(item.lat);
+        const lon = parseFloat(item.lon);
+
+        setSelectedLocation({ latitude: lat, longitude: lon });
+        setSearchQuery(item.display_name);
+        setSelectedAddress(item.display_name); // Use suggestion name directly
+        setSuggestions([]);
+        setShowSuggestions(false);
+        Keyboard.dismiss();
+    };
 
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
+        setShowSuggestions(false);
 
         setIsSearching(true);
         try {
-            // Use OpenStreetMap Nominatim API
-            // Important: Must provide a User-Agent as per Usage Policy
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1`, {
-                headers: {
-                    'User-Agent': 'KasiMasheshaApp/1.0'
-                }
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&countrycodes=za`, {
+                headers: { 'User-Agent': 'KasiMasheshaApp/1.0' }
             });
             const data = await response.json();
 
@@ -73,11 +150,10 @@ export default function LocationMap() {
                 const result = data[0];
                 const lat = parseFloat(result.lat);
                 const lon = parseFloat(result.lon);
-
-                const newLocation = { latitude: lat, longitude: lon };
-                setSelectedLocation(newLocation);
+                setSelectedLocation({ latitude: lat, longitude: lon });
+                setSelectedAddress(result.display_name);
             } else {
-                Alert.alert("Location not found", "Please try a different address.");
+                Alert.alert("Location not found", "Please try a different address in South Africa.");
             }
         } catch (error) {
             console.error(error);
@@ -90,6 +166,10 @@ export default function LocationMap() {
     const handleMapPress = (coordinate: { latitude: number; longitude: number }) => {
         if (isPicking) {
             setSelectedLocation(coordinate);
+            reverseGeocode(coordinate.latitude, coordinate.longitude);
+            Keyboard.dismiss();
+            setSuggestions([]);
+            setShowSuggestions(false);
         }
     };
 
@@ -97,23 +177,68 @@ export default function LocationMap() {
         <View style={styles.container}>
             <StatusBar style="dark" />
 
-            {/* Search Bar */}
-            <View style={styles.searchBar}>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder={isPicking ? "Search delivery address..." : "Search location..."}
-                        value={searchQuery}
-                        onChangeText={setSearchQuery}
-                        onSubmitEditing={handleSearch}
-                        returnKeyType="search"
-                    />
-                    <TouchableOpacity onPress={handleSearch} style={styles.searchButton} disabled={isSearching}>
-                        <Text style={styles.searchButtonText}>{isSearching ? '...' : '🔍'}</Text>
-                    </TouchableOpacity>
+            <CustomModal
+                visible={modalVisible}
+                title="Confirm Location"
+                message={`Address:\n${selectedAddress}`}
+                onConfirm={handleConfirmAction}
+                onCancel={() => setModalVisible(false)}
+                confirmText="Confirm Location"
+                icon="location"
+            />
+
+            <CustomModal
+                visible={successModalVisible}
+                title="Location Pinned!"
+                message="The driver will find you exactly here."
+                onConfirm={handleSuccessClose}
+                confirmText="Great"
+                type="success"
+            />
+
+            {/* Unified Search Container */}
+            <View style={styles.searchContainer}>
+                <View style={styles.searchWrapper}>
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            style={styles.searchInput}
+                            placeholder={isPicking ? "Search delivery address..." : "Search location..."}
+                            value={searchQuery}
+                            onChangeText={(text) => {
+                                setSearchQuery(text);
+                                setShowSuggestions(true);
+                            }}
+                            onSubmitEditing={handleSearch}
+                            returnKeyType="search"
+                        />
+                        <TouchableOpacity onPress={handleSearch} style={styles.searchButton} disabled={isSearching}>
+                            {isSearching ? <ActivityIndicator size="small" color="#000" /> : <Text style={styles.searchIcon}>🔍</Text>}
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Suggestions List inside the same wrapper */}
+                    {showSuggestions && suggestions.length > 0 && (
+                        <View style={styles.suggestionsList}>
+                            <FlatList
+                                data={suggestions}
+                                keyExtractor={(item) => item.place_id.toString()}
+                                renderItem={({ item }) => (
+                                    <TouchableOpacity
+                                        style={styles.suggestionItem}
+                                        onPress={() => handleSelectSuggestion(item)}
+                                    >
+                                        <Text style={styles.suggestionText} numberOfLines={2}>{item.display_name}</Text>
+                                    </TouchableOpacity>
+                                )}
+                                keyboardShouldPersistTaps="handled"
+                                ItemSeparatorComponent={() => <View style={styles.separator} />}
+                            />
+                        </View>
+                    )}
                 </View>
-                {isPicking && <Text style={styles.hintText}>Or tap on map to pin</Text>}
             </View>
+
+            {isPicking && <Text style={styles.hintText}>Or tap on map to pin</Text>}
 
             <View style={styles.mapContainer}>
                 <LeafletMap
@@ -126,8 +251,8 @@ export default function LocationMap() {
 
             <View style={styles.footer}>
                 <Text style={styles.addressLabel}>Selected Address</Text>
-                <Text style={styles.addressValue}>Lat: {selectedLocation.latitude.toFixed(4)}, Lng: {selectedLocation.longitude.toFixed(4)}</Text>
-                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+                <Text style={styles.addressValue} numberOfLines={2}>{selectedAddress}</Text>
+                <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPress}>
                     <Text style={styles.confirmButtonText}>
                         {isPicking ? 'CONFIRM DELIVERY LOCATION' : 'CONFIRM LOCATION'}
                     </Text>
@@ -144,43 +269,74 @@ const styles = StyleSheet.create({
     },
     mapContainer: {
         flex: 1,
-        marginBottom: 180, // Space for footer
+        marginBottom: 180,
     },
-    searchBar: {
+    searchContainer: {
         position: 'absolute',
         top: 50,
         left: 20,
         right: 20,
-        backgroundColor: '#FFFFFF',
-        padding: 10,
-        borderRadius: 10,
-        elevation: 5,
         zIndex: 10,
-        borderWidth: 1,
-        borderColor: '#E0E0E0',
+    },
+    searchWrapper: {
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        overflow: 'hidden', // Ensures everything stays inside rounded corners
+    },
+    inputRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 5,
     },
     searchInput: {
         flex: 1,
-        height: 40,
-        backgroundColor: '#F0F0F0',
-        borderRadius: 8,
-        paddingHorizontal: 10,
+        height: 45,
+        backgroundColor: 'transparent',
+        paddingHorizontal: 15,
+        fontSize: 16,
         color: '#333',
     },
     searchButton: {
-        marginLeft: 10,
-        padding: 8,
-        backgroundColor: '#E8F5E9',
-        borderRadius: 8,
+        padding: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    searchButtonText: {
+    searchIcon: {
         fontSize: 18,
     },
+    suggestionsList: {
+        borderTopWidth: 1,
+        borderTopColor: '#F0F0F0',
+        maxHeight: 200,
+    },
+    suggestionItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 15,
+        backgroundColor: '#FFF',
+    },
+    suggestionText: {
+        fontSize: 14,
+        color: '#333',
+    },
+    separator: {
+        height: 1,
+        backgroundColor: '#F0F0F0',
+    },
     hintText: {
+        position: 'absolute',
+        top: 110, // Below search bar
+        width: '100%',
         fontSize: 12,
-        color: '#757575',
-        marginTop: 5,
+        color: '#555',
         textAlign: 'center',
+        zIndex: 5,
+        backgroundColor: 'rgba(255,255,255,0.7)',
+        paddingVertical: 4,
     },
     footer: {
         position: 'absolute',
@@ -207,9 +363,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 20,
+        minHeight: 40, // Ensure space even while loading
     },
     confirmButton: {
-        backgroundColor: '#006400', // Dark Green
+        backgroundColor: '#006400',
         paddingVertical: 18,
         borderRadius: 12,
         alignItems: 'center',

@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'rea
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUser } from '../../../context/UserContext';
 
 export default function ClientProfileMenu() {
     const router = useRouter();
-    const userName = "Thabo Mokoena"; // In a real app, fetch from context/store
+    const { userData, logout } = useUser();
 
     const menuItems = [
         {
@@ -33,7 +34,7 @@ export default function ClientProfileMenu() {
     ];
 
     const handleLogout = () => {
-        // Implement logout logic
+        logout();
         router.replace('/log_in');
     };
 
@@ -44,10 +45,10 @@ export default function ClientProfileMenu() {
                 {/* Header Profile Summary */}
                 <View style={styles.header}>
                     <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
+                        <Text style={styles.avatarText}>{userData.name.charAt(0)}</Text>
                     </View>
-                    <Text style={styles.name}>{userName}</Text>
-                    <Text style={styles.email}>thabo@kasi.com</Text>
+                    <Text style={styles.name}>{userData.name}</Text>
+                    <Text style={styles.email}>{userData.email}</Text>
                 </View>
 
                 {/* Menu Items */}

@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import CustomModal from '../components/CustomModal';
 
 import { useCart } from '../../context/CartContext';
 
@@ -10,36 +11,63 @@ export default function Cart() {
     const router = useRouter();
     const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress } = useCart();
 
+    // Modal States
+    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+    const [successModalVisible, setSuccessModalVisible] = useState(false);
+
     const subtotal = getTotalAmount();
     const deliveryFee = cartItems.length > 0 ? 15 : 0;
     const total = subtotal + deliveryFee;
 
-    const handleCheckout = () => {
+    const handleCheckoutPress = () => {
         if (!deliveryAddress) {
             Alert.alert("Delivery Location Required", "Please set your delivery location before checking out.");
             return;
         }
+        setConfirmModalVisible(true);
+    };
 
-        Alert.alert(
-            "Confirm Order",
-            `Total Amount: R ${total}.00\n\nDelivery Location:\n${deliveryAddress}\n\nProceed with your order?`,
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Confirm Order",
-                    onPress: () => {
-                        Alert.alert("Order Received!", "The runner is now on the way to your location.");
-                        clearCart();
-                        router.push('/history');
-                    }
-                }
-            ]
-        );
+    const handleConfirmOrder = () => {
+        setConfirmModalVisible(false);
+        setSuccessModalVisible(true);
+    };
+
+    const handleSuccessClose = () => {
+        setSuccessModalVisible(false);
+        clearCart();
+        router.push('/history');
     };
 
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
+
+            <CustomModal
+                visible={confirmModalVisible}
+                title="Confirm Order"
+                onConfirm={handleConfirmOrder}
+                onCancel={() => setConfirmModalVisible(false)}
+                confirmText="Place Order"
+                icon="cart"
+            >
+                <View style={{ alignItems: 'flex-start', width: '100%', paddingHorizontal: 10 }}>
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 5 }}>Order Summary:</Text>
+                    <Text style={{ fontSize: 18, color: '#006400', fontWeight: 'bold', marginBottom: 15 }}>Total: R {total}.00</Text>
+
+                    <Text style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 5 }}>Delivery To:</Text>
+                    <Text style={{ fontSize: 14, color: '#666', fontStyle: 'italic', lineHeight: 20 }}>{deliveryAddress}</Text>
+                </View>
+            </CustomModal>
+
+            <CustomModal
+                visible={successModalVisible}
+                title="Order Received!"
+                message="The runner is now on the way to your location."
+                onConfirm={handleSuccessClose}
+                confirmText="Track Order"
+                type="success"
+            />
+
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
                 {/* HEADER WITH CLEAR OPTION */}
@@ -52,6 +80,8 @@ export default function Cart() {
                         </TouchableOpacity>
                     )}
                 </View>
+
+                {/* ... (Cart Items Rendering) */}
 
                 <View style={styles.cartItems}>
                     {cartItems.length === 0 ? (
@@ -150,7 +180,7 @@ export default function Cart() {
                 {cartItems.length > 0 && (
                     <TouchableOpacity
                         style={[styles.checkoutButton, !deliveryAddress && { backgroundColor: '#ccc' }]}
-                        onPress={handleCheckout}
+                        onPress={handleCheckoutPress}
                         disabled={!deliveryAddress}
                     >
                         <Text style={styles.checkoutButtonText}>CHECKOUT (R {total}.00)</Text>

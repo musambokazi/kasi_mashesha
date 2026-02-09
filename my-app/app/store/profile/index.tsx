@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUser } from '../../../context/UserContext';
 
 export default function StoreProfileMenu() {
     const router = useRouter();
-    const userName = "Mama's Kitchen";
+    const { userData, logout } = useUser();
 
     const menuItems = [
         {
@@ -33,6 +34,7 @@ export default function StoreProfileMenu() {
     ];
 
     const handleLogout = () => {
+        logout();
         router.replace('/log_in');
     };
 
@@ -42,9 +44,9 @@ export default function StoreProfileMenu() {
 
                 <View style={styles.header}>
                     <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
+                        <Text style={styles.avatarText}>{userData.businessName ? userData.businessName.charAt(0) : 'S'}</Text>
                     </View>
-                    <Text style={styles.name}>{userName}</Text>
+                    <Text style={styles.name}>{userData.businessName}</Text>
                     <Text style={styles.role}>Store Owner</Text>
                 </View>
 

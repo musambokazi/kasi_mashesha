@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUser } from '../../../context/UserContext';
 
 export default function RunnerProfileMenu() {
     const router = useRouter();
-    const userName = "Sipho Dlamini";
+    const { userData, logout } = useUser();
 
     const menuItems = [
         {
@@ -33,6 +34,7 @@ export default function RunnerProfileMenu() {
     ];
 
     const handleLogout = () => {
+        logout();
         router.replace('/log_in');
     };
 
@@ -42,10 +44,10 @@ export default function RunnerProfileMenu() {
 
                 <View style={styles.header}>
                     <View style={styles.avatarContainer}>
-                        <Text style={styles.avatarText}>{userName.charAt(0)}</Text>
+                        <Text style={styles.avatarText}>{userData.name.charAt(0)}</Text>
                     </View>
-                    <Text style={styles.name}>{userName}</Text>
-                    <Text style={styles.role}>Verified Runner</Text>
+                    <Text style={styles.name}>{userData.name}</Text>
+                    <Text style={styles.role}>Verified Runner • {userData.vehicleType}</Text>
                 </View>
 
                 <View style={styles.menuContainer}>

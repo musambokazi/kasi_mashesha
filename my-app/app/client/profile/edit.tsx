@@ -1,149 +1,130 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '../../../context/UserContext';
+import { Ionicons } from '@expo/vector-icons';
 
-export default function ClientProfile() {
+export default function EditProfile() {
   const router = useRouter();
-  const [name, setName] = useState('Thabo Mokoena');
-  const [email, setEmail] = useState('thabo@kasi.com');
-  const [phone, setPhone] = useState('072 123 4567');
-  const [address, setAddress] = useState('45 Mandela St, Soweto');
-  const [image, setImage] = useState<string | null>(null);
+  const { userData, updateUserData } = useUser();
 
-  const getInitials = () => {
-    const parts = name.trim().split(' ').filter(Boolean);
-    return parts.map(p => p[0]).join('').toUpperCase() || 'U';
-  };
+  // Local state for form
+  const [name, setName] = useState(userData.name);
+  const [email, setEmail] = useState(userData.email);
+  const [phone, setPhone] = useState(userData.phone);
+  const [address, setAddress] = useState(userData.address || '');
 
-  const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      Alert.alert('Not supported', 'Image upload works only on mobile devices.');
+  const handleSave = () => {
+    if (!name || !email || !phone) {
+      Alert.alert("Error", "Please fill in all required fields.");
       return;
     }
 
-    try {
-      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert('Permission needed', 'Allow access to photos.');
-        return;
-      }
+    updateUserData({
+      name,
+      email,
+      phone,
+      address
+    });
 
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
-      if (!result.canceled && result.assets?.length) setImage(result.assets[0].uri);
-    } catch (err) {
-      console.error(err);
-      Alert.alert('Error', 'Unable to pick image.');
-    }
-  };
-
-  const handleLogout = () => {
-      // In a real app, clear auth tokens here
-      router.replace('/log_in');
+    Alert.alert("Success", "Profile updated successfully!", [
+      { text: "OK", onPress: () => router.back() }
+    ]);
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* ===== TOP-RIGHT AVATAR ===== */}
-      <View style={styles.topRightAvatarWrapper}>
-        <TouchableOpacity onPress={pickImage}>
-          {image ? (
-            <Image source={{ uri: image }} style={styles.topRightAvatar} />
-          ) : (
-            <View style={styles.topRightAvatar}>
-              <Text style={styles.topRightAvatarText}>{getInitials()}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Full Name</Text>
+        <TextInput
+          style={styles.input}
+          value={name}
+          onChangeText={setName}
+          placeholder="Enter your full name"
+        />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={pickImage}>
-            {image ? (
-              <Image source={{ uri: image }} style={styles.avatarImage} />
-            ) : (
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>{getInitials()}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.role}>Client</Text>
-          <Text style={styles.changePhotoHint}>Tap photo to change</Text>
-        </View>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Email Address</Text>
+        <TextInput
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+          placeholder="Enter your email"
+          keyboardType="email-address"
+        />
+      </View>
 
-        {/* PERSONAL DETAILS */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Details</Text>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Phone Number</Text>
+        <TextInput
+          style={styles.input}
+          value={phone}
+          onChangeText={setPhone}
+          placeholder="Enter your phone number"
+          keyboardType="phone-pad"
+        />
+      </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Full Name</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} />
-          </View>
+      <View style={styles.formGroup}>
+        <Text style={styles.label}>Address</Text>
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          value={address}
+          onChangeText={setAddress}
+          placeholder="Enter your address"
+          multiline
+        />
+      </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email Address</Text>
-            <TextInput style={styles.input} value={email} onChangeText={setEmail} keyboardType="email-address" />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number</Text>
-            <TextInput style={styles.input} value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Default Address</Text>
-            <TextInput style={styles.input} value={address} onChangeText={setAddress} />
-          </View>
-        </View>
-
-        <TouchableOpacity style={styles.saveButton} onPress={() => alert('Profile Updated!')}>
-          <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>LOGOUT</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </SafeAreaView>
+      <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+        <Text style={styles.saveButtonText}>Save Changes</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  topRightAvatarWrapper: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-    zIndex: 10,
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F5F5',
   },
-  topRightAvatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#000080',
-    justifyContent: 'center',
+  content: {
+    padding: 20,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  label: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
+  },
+  input: {
+    backgroundColor: '#FFF',
+    padding: 15,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+    fontSize: 16,
+    color: '#333',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  saveButton: {
+    backgroundColor: '#000080', // Navy
+    paddingVertical: 18,
+    borderRadius: 12,
     alignItems: 'center',
-    overflow: 'hidden',
+    marginTop: 20,
+    elevation: 2,
   },
-  topRightAvatarText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
-  scrollContent: { padding: 20, paddingTop: 100 },
-  header: { alignItems: 'center', marginBottom: 30 },
-  avatarContainer: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#000080', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
-  avatarImage: { width: 100, height: 100, borderRadius: 50, marginBottom: 15 },
-  avatarText: { color: '#fff', fontSize: 36, fontWeight: 'bold' },
-  changePhotoHint: { fontSize: 12, color: '#888', marginTop: 4 },
-  name: { fontSize: 24, fontWeight: 'bold', color: '#333' },
-  role: { fontSize: 16, color: '#757575', marginTop: 5 },
-  section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#000080', marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#EEE', paddingBottom: 10 },
-  inputGroup: { marginBottom: 15 },
-  label: { fontSize: 14, color: '#757575', marginBottom: 5, fontWeight: '600' },
-  input: { backgroundColor: '#F9F9F9', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, padding: 12, fontSize: 16 },
-  saveButton: { backgroundColor: '#006400', paddingVertical: 15, borderRadius: 10, alignItems: 'center', marginBottom: 15 },
-  saveButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
-  logoutButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#800000', paddingVertical: 15, borderRadius: 10, alignItems: 'center' },
-  logoutButtonText: { color: '#800000', fontWeight: 'bold', fontSize: 16 },
+  saveButtonText: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
