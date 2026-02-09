@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 export default function Login() {
     const router = useRouter();
@@ -10,6 +11,27 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [role, setRole] = useState('client'); // client, runner, store
     const [showPassword, setShowPassword] = useState(false);
+
+    // Reanimated shared value for slider position (percentages)
+    // client: 1%, runner: 34%, store: 67%
+    const sliderPosition = useSharedValue(1);
+
+    useEffect(() => {
+        let targetValue = 1;
+        if (role === 'runner') targetValue = 34;
+        if (role === 'store') targetValue = 67;
+
+        sliderPosition.value = withTiming(targetValue, {
+            duration: 250,
+            easing: Easing.inOut(Easing.ease),
+        });
+    }, [role]);
+
+    const animatedSliderStyle = useAnimatedStyle(() => {
+        return {
+            left: `${sliderPosition.value}%`,
+        };
+    });
 
     const handleLogin = () => {
         // Implement login logic here
@@ -51,17 +73,9 @@ export default function Login() {
                     {/* Role Selection - Slider Style */}
                     <View style={styles.roleContainer}>
                         {/* Animated Background Slider */}
-                        <View style={[
+                        <Animated.View style={[
                             styles.roleSlider,
-                            {
-                                transform: [
-                                    { translateX: role === 'client' ? 0 : role === 'runner' ? 100 : 200 } // Approximate, will use flex for better responsiveness
-                                ],
-                                // Better approach using flex/percentage if we can't measure, 
-                                // but for now simplified with state-based styles strictly or simple math.
-                                // Let's use a simple state-based alignment for the slider effect
-                                left: role === 'client' ? '1%' : role === 'runner' ? '34%' : '67%'
-                            }
+                            animatedSliderStyle
                         ]} />
 
                         {['client', 'runner', 'store'].map((r) => (

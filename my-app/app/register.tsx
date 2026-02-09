@@ -1,13 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 
 export default function Register() {
     const router = useRouter();
     const [role, setRole] = useState('client'); // client, runner, store
     const [showPassword, setShowPassword] = useState(false);
+
+    // Reanimated shared value for slider position (percentages)
+    // client: 1%, runner: 34%, store: 67%
+    const sliderPosition = useSharedValue(1);
+
+    useEffect(() => {
+        let targetValue = 1;
+        if (role === 'runner') targetValue = 34;
+        if (role === 'store') targetValue = 67;
+
+        sliderPosition.value = withTiming(targetValue, {
+            duration: 250,
+            easing: Easing.inOut(Easing.ease),
+        });
+    }, [role]);
+
+    const animatedSliderStyle = useAnimatedStyle(() => {
+        return {
+            left: `${sliderPosition.value}%`,
+        };
+    });
 
     // Common fields
     const [email, setEmail] = useState('');
@@ -46,11 +68,9 @@ export default function Register() {
                 <View style={styles.formContainer}>
                     <View style={styles.roleContainer}>
                         {/* Animated Background Slider */}
-                        <View style={[
+                        <Animated.View style={[
                             styles.roleSlider,
-                            {
-                                left: role === 'client' ? '1%' : role === 'runner' ? '34%' : '67%'
-                            }
+                            animatedSliderStyle
                         ]} />
 
                         {['client', 'runner', 'store'].map((r) => (
