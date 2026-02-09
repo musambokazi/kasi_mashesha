@@ -9,15 +9,18 @@ import { useCart } from '../../context/CartContext';
 
 export default function Cart() {
     const router = useRouter();
-    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress } = useCart();
+    const { cartItems, getTotalAmount, clearCart, addToCart, removeFromCart, deliveryAddress, tip } = useCart();
 
     // Modal States
     const [confirmModalVisible, setConfirmModalVisible] = useState(false);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
 
-    const subtotal = getTotalAmount();
+    // Correctly separate tip from subtotal (which currently includes tip in CartContext)
+    // Or simpler: Calculate pure subtotal (items only) here
+    const itemTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const subtotal = itemTotal; // In Cart UI, let's call items "Subtotal"
     const deliveryFee = cartItems.length > 0 ? 15 : 0;
-    const total = subtotal + deliveryFee;
+    const total = subtotal + deliveryFee + tip; // Total + Delivery + Tip
 
     const handleCheckoutPress = () => {
         if (!deliveryAddress) {
@@ -131,12 +134,17 @@ export default function Cart() {
                             <Text style={styles.totalValue}>R {subtotal}.00</Text>
                         </View>
                         <View style={styles.totalRow}>
-                            <Text style={styles.totalLabel}>Delivery Fee</Text>
                             <Text style={styles.totalValue}>R {deliveryFee}.00</Text>
                         </View>
+                        {tip > 0 && (
+                            <View style={styles.totalRow}>
+                                <Text style={styles.totalLabel}>Driver Tip</Text>
+                                <Text style={styles.totalValue}>R {tip.toFixed(2)}</Text>
+                            </View>
+                        )}
                         <View style={[styles.totalRow, styles.grandTotal]}>
                             <Text style={styles.grandTotalLabel}>Total</Text>
-                            <Text style={styles.grandTotalValue}>R {total}.00</Text>
+                            <Text style={styles.grandTotalValue}>R {total.toFixed(2)}</Text>
                         </View>
 
                         {/* DELIVERY LOCATION SECTION */}
