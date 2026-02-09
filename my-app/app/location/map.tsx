@@ -5,6 +5,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import LeafletMap from '../components/LeafletMap';
 import { useCart } from '../../context/CartContext';
 import CustomModal from '../components/CustomModal';
+import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Suggestion {
     place_id: number;
@@ -245,6 +247,51 @@ export default function LocationMap() {
         }
     };
 
+    const handleLocateMe = async () => {
+        setIsSearching(true);
+        try {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                setAlertConfig({
+                    visible: true,
+                    title: "Permission Denied",
+                    message: "Permission to access location was denied. Please enable it in settings to use this feature.",
+                    type: 'danger',
+                    onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                    confirmText: "OK",
+                    showCancel: false
+                });
+                return;
+            }
+
+            let location = await Location.getCurrentPositionAsync({});
+            const { latitude, longitude } = location.coords;
+
+            setSelectedLocation({ latitude, longitude });
+            reverseGeocode(latitude, longitude);
+
+            // Clear search when locating ensuring we focus on the new spot
+            setSuggestions([]);
+            setShowSuggestions(false);
+            setSearchQuery("");
+            Keyboard.dismiss();
+
+        } catch (error) {
+            console.error(error);
+            setAlertConfig({
+                visible: true,
+                title: "Error",
+                message: "Could not fetch current location.",
+                type: 'danger',
+                onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                confirmText: "OK",
+                showCancel: false
+            });
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     const handleMapPress = (coordinate: { latitude: number; longitude: number }) => {
         if (isPicking) {
             setSelectedLocation(coordinate);
@@ -367,6 +414,15 @@ export default function LocationMap() {
                     onMapPress={handleMapPress}
                     mapCenter={selectedLocation}
                 />
+
+                {/* Locate Me Button */}
+                <TouchableOpacity
+                    style={styles.locateButton}
+                    onPress={handleLocateMe}
+                    activeOpacity={0.7}
+                >
+                    <Ionicons name="locate" size={24} color="#006400" />
+                </TouchableOpacity>
             </View>
 
             <View style={styles.footer}>
@@ -379,7 +435,7 @@ export default function LocationMap() {
                     </Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </View >
     );
 }
 
@@ -473,6 +529,20 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 5,
+    },
+    locateButton: {
+        position: 'absolute',
+        bottom: 20,
+        right: 20,
+        backgroundColor: '#FFFFFF',
+        padding: 12,
+        borderRadius: 30,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+        zIndex: 10,
     },
     addressLabel: {
         color: '#757575',
