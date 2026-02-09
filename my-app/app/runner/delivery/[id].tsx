@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import LeafletMap from '../../../components/LeafletMap';
 import { useOrders } from '../../../context/OrderContext';
 
 export default function DeliveryDetails() {
@@ -28,13 +29,54 @@ export default function DeliveryDetails() {
     const actionText = order.status === 'Ready for Pickup' ? 'PICKUP ORDER' : 'COMPLETE DELIVERY';
     const status = order.status;
 
+    // Mock Coordinates
+    const shopLocation = { latitude: -26.2550, longitude: 28.4050 };
+    const customerLocation = { latitude: -26.2300, longitude: 28.3800 };
+
+    const initialRegion = {
+        latitude: -26.2425,
+        longitude: 28.3925,
+        zoom: 12
+    };
+
+    const markers = [
+        {
+            latitude: shopLocation.latitude,
+            longitude: shopLocation.longitude,
+            title: order.shopName,
+            icon: 'shop'
+        },
+        {
+            latitude: customerLocation.latitude,
+            longitude: customerLocation.longitude,
+            title: order.customerName,
+            icon: 'user'
+        }
+    ];
+
+    const routeCoordinates = [shopLocation, customerLocation];
+
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
+
+            {/* Map View Integration */}
+            <View style={styles.mapContainer}>
+                <LeafletMap
+                    initialRegion={initialRegion}
+                    markers={markers}
+                    routeCoordinates={routeCoordinates}
+                />
+
+                <View style={styles.mapOverlay}>
+                    <Text style={styles.earningBadge}>Earn R 25.00</Text>
+                </View>
+            </View>
+
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Delivery #{id}</Text>
-                    <Text style={styles.earningBadge}>Earn R 25.00</Text>
+                    <Text style={styles.statusText}>{status}</Text>
                 </View>
 
                 <View style={styles.stepContainer}>
@@ -71,25 +113,48 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFFFFF',
     },
+    mapContainer: {
+        height: 250,
+        width: '100%',
+        position: 'relative',
+    },
+    mapOverlay: {
+        position: 'absolute',
+        top: 20,
+        right: 20,
+        backgroundColor: 'rgba(255,255,255,0.9)',
+        paddingVertical: 5,
+        paddingHorizontal: 10,
+        borderRadius: 8,
+    },
     scrollContent: {
         padding: 20,
+        borderTopLeftRadius: 25,
+        borderTopRightRadius: 25,
+        marginTop: -20,
+        backgroundColor: '#FFFFFF',
+        flex: 1,
     },
     header: {
-        marginTop: 20,
-        marginBottom: 30,
+        marginTop: 10,
+        marginBottom: 20,
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
     },
     headerTitle: {
-        fontSize: 28,
+        fontSize: 24,
         fontWeight: 'bold',
         color: '#000080', // Navy Blue
+    },
+    statusText: {
+        color: '#757575',
+        fontWeight: '600',
     },
     earningBadge: {
         color: '#006400', // Dark Green
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 14,
     },
     stepContainer: {
         flexDirection: 'row',
@@ -114,6 +179,7 @@ const styles = StyleSheet.create({
         color: '#757575',
         backgroundColor: '#FFF',
         paddingHorizontal: 5,
+        fontSize: 12,
     },
     stepTextActive: {
         color: '#006400',
@@ -135,17 +201,17 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     locationName: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#000080',
         marginBottom: 5,
     },
     locationAddress: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#333',
     },
     contactInfo: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#006400',
         marginTop: 5,
         fontWeight: '600',
@@ -155,13 +221,14 @@ const styles = StyleSheet.create({
         paddingVertical: 18,
         borderRadius: 10,
         alignItems: 'center',
-        marginTop: 20,
+        marginTop: 10,
+        marginBottom: 30,
         elevation: 5,
     },
     actionButtonText: {
         color: '#FFFFFF',
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 16,
         letterSpacing: 1,
     },
 });

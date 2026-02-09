@@ -1,12 +1,28 @@
-import React from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-
-// Placeholder for a Map View. 
-// In a real CLI environment without native module linking tailored for maps, 
-// we use a visual mock to prevent build errors while demonstrating functionality.
+import LeafletMap from '../components/LeafletMap';
 
 export default function LocationMap() {
+    const [selectedLocation, setSelectedLocation] = useState({
+        latitude: -26.2343, // Soweto coordinates
+        longitude: 27.8546,
+    });
+
+    const initialRegion = {
+        latitude: -26.2343,
+        longitude: 27.8546,
+        zoom: 13
+    };
+
+    const markers = [
+        {
+            latitude: selectedLocation.latitude,
+            longitude: selectedLocation.longitude,
+            title: "Selected Location",
+        }
+    ];
+
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
@@ -16,30 +32,17 @@ export default function LocationMap() {
                 <Text style={styles.searchText}>45 Mandela St, Soweto</Text>
             </View>
 
-            {/* Map Area Mock */}
-            <View style={styles.mapArea}>
-                <View style={styles.gridLineVertical} />
-                <View style={styles.gridLineHorizontal} />
-
-                {/* User Location Pin */}
-                <View style={styles.userPin}>
-                    <View style={styles.pinHead} />
-                    <View style={styles.pinPoint} />
-                </View>
-
-                {/* Shop Location Pin */}
-                <View style={[styles.shopPin, { top: 150, left: 100 }]}>
-                    <View style={[styles.pinHead, { backgroundColor: '#800000' }]} />
-                    <View style={[styles.pinPoint, { borderTopColor: '#800000' }]} />
-                </View>
-
-                <Text style={styles.mapLabel}>MAP VIEW MODE</Text>
+            <View style={styles.mapContainer}>
+                <LeafletMap
+                    initialRegion={initialRegion}
+                    markers={markers}
+                />
             </View>
 
             <View style={styles.footer}>
                 <Text style={styles.addressLabel}>Selected Address</Text>
-                <Text style={styles.addressValue}>45 Mandela St, Soweto</Text>
-                <TouchableOpacity style={styles.confirmButton}>
+                <Text style={styles.addressValue}>Lat: {selectedLocation.latitude.toFixed(4)}, Lng: {selectedLocation.longitude.toFixed(4)}</Text>
+                <TouchableOpacity style={styles.confirmButton} onPress={() => Alert.alert("Location Confirmed")}>
                     <Text style={styles.confirmButtonText}>CONFIRM LOCATION</Text>
                 </TouchableOpacity>
             </View>
@@ -51,6 +54,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#F5F5F5',
+    },
+    mapContainer: {
+        flex: 1,
+        marginBottom: 180, // Space for footer
     },
     searchBar: {
         position: 'absolute',
@@ -69,68 +76,11 @@ const styles = StyleSheet.create({
         color: '#333',
         fontWeight: '600',
     },
-    mapArea: {
-        flex: 1,
-        backgroundColor: '#E3F2FD', // Light Blue map water/bg color
-        justifyContent: 'center',
-        alignItems: 'center',
-        overflow: 'hidden',
-    },
-    gridLineVertical: {
-        position: 'absolute',
-        width: 20,
-        height: '100%',
-        borderRightWidth: 40,
-        borderRightColor: 'rgba(255, 255, 255, 0.5)',
-        left: '40%',
-    },
-    gridLineHorizontal: {
-        position: 'absolute',
-        height: 20,
-        width: '100%',
-        borderBottomWidth: 30,
-        borderBottomColor: 'rgba(255, 255, 255, 0.5)',
-        top: '30%',
-    },
-    mapLabel: {
-        position: 'absolute',
-        bottom: 200,
-        color: 'rgba(0,0,0,0.1)',
-        fontSize: 40,
-        fontWeight: 'bold',
-    },
-    userPin: {
-        alignItems: 'center',
-        marginBottom: 40, // Offset to center on point
-    },
-    shopPin: {
-        position: 'absolute',
-        alignItems: 'center',
-    },
-    pinHead: {
-        width: 40,
-        height: 40,
-        backgroundColor: '#000080', // Navy Blue
-        borderRadius: 20,
-        borderWidth: 3,
-        borderColor: '#FFFFFF',
-        elevation: 4,
-    },
-    pinPoint: {
-        width: 0,
-        height: 0,
-        backgroundColor: 'transparent',
-        borderStyle: 'solid',
-        borderLeftWidth: 10,
-        borderRightWidth: 10,
-        borderBottomWidth: 0,
-        borderTopWidth: 14,
-        borderLeftColor: 'transparent',
-        borderRightColor: 'transparent',
-        borderTopColor: '#000080',
-        marginTop: -2,
-    },
     footer: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
+        height: 180,
         backgroundColor: '#FFFFFF',
         padding: 20,
         borderTopLeftRadius: 25,
@@ -140,7 +90,6 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -2 },
         shadowOpacity: 0.1,
         shadowRadius: 5,
-        paddingBottom: 40,
     },
     addressLabel: {
         color: '#757575',
@@ -149,7 +98,7 @@ const styles = StyleSheet.create({
     },
     addressValue: {
         color: '#333',
-        fontSize: 20,
+        fontSize: 16,
         fontWeight: 'bold',
         marginBottom: 20,
     },

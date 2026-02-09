@@ -1,17 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Image, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
+import LeafletMap from '../../components/LeafletMap';
 
 const { width } = Dimensions.get('window');
 
 // Springs Coordinates
-const SPRINGS_REGION = {
+const SPRINGS_COORDS = {
     latitude: -26.2500,
     longitude: 28.4000,
-    latitudeDelta: 0.0922,
-    longitudeDelta: 0.0421,
+    zoom: 13
 };
 
 export default function TrackOrder() {
@@ -50,50 +49,37 @@ export default function TrackOrder() {
         return () => clearInterval(interval);
     }, []);
 
+    const markers = [
+        {
+            latitude: -26.2550,
+            longitude: 28.4050,
+            title: "Vusi's Kota Joint (Shop)",
+            icon: 'shop'
+        },
+        {
+            latitude: -26.2300,
+            longitude: 28.3800,
+            title: "My Home",
+            icon: 'user'
+        },
+        {
+            latitude: driverLoc.latitude,
+            longitude: driverLoc.longitude,
+            title: "Sipho (Runner)",
+            icon: 'car'
+        }
+    ];
+
     return (
         <View style={styles.container}>
             <StatusBar style="dark" />
 
             {/* Real Map with Springs Focus */}
             <View style={styles.mapArea}>
-                <MapView
-                    provider={PROVIDER_GOOGLE}
-                    style={StyleSheet.absoluteFill}
-                    initialRegion={SPRINGS_REGION}
-                >
-                    {/* Shop Marker */}
-                    <Marker
-                        coordinate={{ latitude: -26.2550, longitude: 28.4050 }}
-                        title="Vusi's Kota Joint"
-                        description="Picking up order..."
-                    >
-                        <View style={[styles.pin, styles.shopPin]}>
-                            <Text style={styles.pinText}>🏪</Text>
-                        </View>
-                    </Marker>
-
-                    {/* User Home Marker */}
-                    <Marker
-                        coordinate={{ latitude: -26.2300, longitude: 28.3800 }}
-                        title="My Home"
-                        description="45 Mandela St"
-                    >
-                        <View style={[styles.pin, styles.userPin]}>
-                            <Text style={styles.pinText}>🏠</Text>
-                        </View>
-                    </Marker>
-
-                    {/* Moving Driver Marker */}
-                    <Marker
-                        coordinate={driverLoc}
-                        title="Sipho (Runner)"
-                        description="On the way!"
-                    >
-                        <View style={styles.carMarker}>
-                            <Text style={{ fontSize: 24 }}>🚗</Text>
-                        </View>
-                    </Marker>
-                </MapView>
+                <LeafletMap
+                    initialRegion={SPRINGS_COORDS}
+                    markers={markers}
+                />
             </View>
 
             {/* Driver Card & Status */}
@@ -146,34 +132,12 @@ const styles = StyleSheet.create({
     },
     mapArea: {
         flex: 1,
-    },
-    pin: {
-        width: 40,
-        height: 40,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderRadius: 20,
-        backgroundColor: '#FFF',
-        elevation: 5,
-        borderWidth: 2,
-        borderColor: 'white',
-    },
-    shopPin: {
-        backgroundColor: '#006400', // Green
-    },
-    userPin: {
-        backgroundColor: '#000080', // Navy
-    },
-    pinText: {
-        fontSize: 20,
-    },
-    carMarker: {
-        width: 50,
-        height: 50,
-        justifyContent: 'center',
-        alignItems: 'center',
+        marginBottom: 320, // Reserve space for bottom sheet
     },
     bottomSheet: {
+        position: 'absolute',
+        bottom: 0,
+        width: '100%',
         backgroundColor: '#FFFFFF',
         borderTopLeftRadius: 25,
         borderTopRightRadius: 25,
@@ -183,7 +147,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -5 },
         shadowOpacity: 0.1,
         shadowRadius: 10,
-        minHeight: 320,
+        height: 320,
     },
     handle: {
         width: 40,
