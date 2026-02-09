@@ -10,8 +10,15 @@ export default function ClientHome() {
             <StatusBar style="dark" />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Kasi Shops</Text>
-                    <Text style={styles.headerSubtitle}>Order from your local favorities</Text>
+                    <View style={styles.headerTop}>
+                        <View>
+                            <Text style={styles.headerTitle}>Kasi Shops</Text>
+                            <Text style={styles.headerSubtitle}>Order from your local favorities</Text>
+                        </View>
+                        <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/client/profile')}>
+                            <Text style={styles.profileButtonText}>Profile</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 {/* Mock Content */}
@@ -65,6 +72,22 @@ const styles = StyleSheet.create({
     headerSubtitle: {
         fontSize: 16,
         color: '#757575',
+    },
+    headerTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    profileButton: {
+        backgroundColor: '#000080',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+    },
+    profileButtonText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 12,
     },
     shopCard: {
         backgroundColor: '#FFFFFF',

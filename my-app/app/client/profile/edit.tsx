@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ScrollView, StyleSheet, Platform, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'expo-router';
 
-export default function Profile() {
+export default function ClientProfile() {
+  const router = useRouter();
   const [name, setName] = useState('Thabo Mokoena');
   const [email, setEmail] = useState('thabo@kasi.com');
   const [phone, setPhone] = useState('072 123 4567');
@@ -34,6 +36,11 @@ export default function Profile() {
       console.error(err);
       Alert.alert('Error', 'Unable to pick image.');
     }
+  };
+
+  const handleLogout = () => {
+      // In a real app, clear auth tokens here
+      router.replace('/log_in');
   };
 
   return (
@@ -96,7 +103,7 @@ export default function Profile() {
           <Text style={styles.saveButtonText}>SAVE CHANGES</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={() => alert('Logout')}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutButtonText}>LOGOUT</Text>
         </TouchableOpacity>
       </ScrollView>
@@ -140,5 +147,3 @@ const styles = StyleSheet.create({
   logoutButton: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#800000', paddingVertical: 15, borderRadius: 10, alignItems: 'center' },
   logoutButtonText: { color: '#800000', fontWeight: 'bold', fontSize: 16 },
 });
-
-

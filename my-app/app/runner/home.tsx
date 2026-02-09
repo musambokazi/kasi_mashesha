@@ -25,9 +25,9 @@ export default function RunnerHome() {
                     <Text style={styles.greeting}>Hello, Runner</Text>
                     <Text style={styles.date}>{new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'short' })}</Text>
                 </View>
-                <View style={styles.profileIcon}>
+                <TouchableOpacity style={styles.profileIcon} onPress={() => router.push('/runner/profile')}>
                     <Text style={styles.profileText}>R</Text>
-                </View>
+                </TouchableOpacity>
             </View>
 
             {/* Earnings Card */}
@@ -125,17 +125,19 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     profileIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: 'rgba(255, 255, 255, 0.25)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.5)',
     },
     profileText: {
         color: '#FFFFFF',
         fontWeight: 'bold',
-        fontSize: 18,
+        fontSize: 20,
     },
     earningsCard: {
         backgroundColor: '#FFFFFF',

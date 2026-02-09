@@ -35,7 +35,22 @@ export default function RootLayout() {
           <Stack.Screen name="runner/home" options={{ title: "Delivery Hub" }} />
           <Stack.Screen name="runner/delivery/[id]" options={{ title: "Active Delivery" }} />
 
-          <Stack.Screen name="profile" options={{ title: "My Profile" }} />
+
+
+          <Stack.Screen name="client/profile/index" options={{ title: "My Profile" }} />
+          <Stack.Screen name="client/profile/edit" options={{ title: "Edit Profile" }} />
+          <Stack.Screen name="client/profile/settings" options={{ title: "Settings" }} />
+          <Stack.Screen name="client/profile/support" options={{ title: "Help & Support" }} />
+
+          <Stack.Screen name="runner/profile/index" options={{ title: "Runner Profile" }} />
+          <Stack.Screen name="runner/profile/edit" options={{ title: "Edit Profile" }} />
+          <Stack.Screen name="runner/profile/earnings" options={{ title: "Earnings" }} />
+          <Stack.Screen name="runner/profile/settings" options={{ title: "Settings" }} />
+
+          <Stack.Screen name="store/profile/index" options={{ title: "Store Profile" }} />
+          <Stack.Screen name="store/profile/edit" options={{ title: "Edit Store" }} />
+          <Stack.Screen name="store/profile/settings" options={{ title: "Store Settings" }} />
+
           <Stack.Screen name="history" options={{ title: "Order History" }} />
           <Stack.Screen name="location/map" options={{ title: "Location" }} />
         </Stack>

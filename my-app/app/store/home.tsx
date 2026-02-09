@@ -10,8 +10,15 @@ export default function StoreHome() {
             <StatusBar style="dark" />
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>My Spaza</Text>
-                    <Text style={styles.headerSubtitle}>Manage your stock and orders</Text>
+                    <View style={styles.headerTop}>
+                        <View>
+                            <Text style={styles.headerTitle}>My Spaza</Text>
+                            <Text style={styles.headerSubtitle}>Manage your stock and orders</Text>
+                        </View>
+                        <TouchableOpacity style={styles.profileButton} onPress={() => router.push('/store/profile')}>
+                            <Text style={styles.profileButtonText}>Store Profile</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
 
                 <View style={styles.statsContainer}>
@@ -68,6 +75,22 @@ const styles = StyleSheet.create({
     headerSubtitle: {
         fontSize: 16,
         color: '#757575',
+    },
+    headerTop: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    profileButton: {
+        backgroundColor: '#000080',
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 20,
+    },
+    profileButtonText: {
+        color: '#FFF',
+        fontWeight: 'bold',
+        fontSize: 12,
     },
     statsContainer: {
         flexDirection: 'row',
