@@ -33,6 +33,16 @@ export default function LocationMap() {
     const [modalVisible, setModalVisible] = useState(false);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
 
+    const [alertConfig, setAlertConfig] = useState({
+        visible: false,
+        title: "",
+        message: "",
+        type: 'default' as 'default' | 'success' | 'danger',
+        onConfirm: () => { },
+        confirmText: "OK",
+        showCancel: false
+    });
+
     const [selectedLocation, setSelectedLocation] = useState({
         latitude: -26.2343, // Soweto coordinates
         longitude: 27.8546,
@@ -90,7 +100,16 @@ export default function LocationMap() {
         if (isPicking) {
             setSuccessModalVisible(true);
         } else {
-            Alert.alert("Location Confirmed", `Address: ${addressToSave}`);
+            // Replaced Alert with CustomModal
+            setAlertConfig({
+                visible: true,
+                title: "Location Confirmed",
+                message: `Address: ${addressToSave}`,
+                type: 'success',
+                onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                confirmText: "OK",
+                showCancel: false
+            });
         }
     };
 
@@ -156,26 +175,80 @@ export default function LocationMap() {
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
         setShowSuggestions(false);
-
         setIsSearching(true);
+        Keyboard.dismiss();
+
+        const performSearch = async (query: string) => {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=za`, {
+                    headers: { 'User-Agent': 'KasiMasheshaApp/1.0' }
+                });
+                return await response.json();
+            } catch (e) {
+                return [];
+            }
+        };
+
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchQuery)}&format=json&limit=1&countrycodes=za`, {
-                headers: { 'User-Agent': 'KasiMasheshaApp/1.0' }
-            });
-            const data = await response.json();
+            // 1. Try Exact Search
+            let data = await performSearch(searchQuery);
+            let isFallback = false;
+
+            // 2. Fallback: Strip Street Number (e.g. "9 Palm Street" -> "Palm Street")
+            // Regex matches start "9 " or middle ", 9 "
+            if (!data || data.length === 0) {
+                const relaxQuery = searchQuery.replace(/^\d+\s+|,\s*\d+\s+/g, '');
+                if (relaxQuery !== searchQuery && relaxQuery.trim().length > 0) {
+                    console.log("Falling back to:", relaxQuery);
+                    data = await performSearch(relaxQuery);
+                    isFallback = true;
+                }
+            }
 
             if (data && data.length > 0) {
                 const result = data[0];
                 const lat = parseFloat(result.lat);
                 const lon = parseFloat(result.lon);
                 setSelectedLocation({ latitude: lat, longitude: lon });
+                // If it's a fallback, keep the user's original query as the "Address" to show intent, 
+                // but maybe append "(Approx)" or just rely on the alert.
+                // Actually, let's reverse geocode the *new* location to show what we found, 
+                // but alert the user.
                 setSelectedAddress(result.display_name);
+
+                if (isFallback) {
+                    setAlertConfig({
+                        visible: true,
+                        title: "Exact Number Not Found",
+                        message: `We couldn't find the exact number "${searchQuery}", so we've taken you to "${result.display_name.split(',')[0]}".\n\nPlease tap the map to pin your exact house.`,
+                        type: 'default',
+                        onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                        confirmText: "I Understand",
+                        showCancel: false
+                    });
+                }
             } else {
-                Alert.alert("Location not found", "Please try a different address in South Africa.");
+                setAlertConfig({
+                    visible: true,
+                    title: "Location Not Found",
+                    message: "We couldn't find that address. Please try searching for just the Street or Suburb, then pin your location.",
+                    type: 'danger',
+                    onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                    confirmText: "OK",
+                    showCancel: false
+                });
             }
         } catch (error) {
             console.error(error);
-            Alert.alert("Error", "Could not search for location.");
+            setAlertConfig({
+                visible: true,
+                title: "Error",
+                message: "Could not search for location. Please check your internet connection.",
+                type: 'danger',
+                onConfirm: () => setAlertConfig(prev => ({ ...prev, visible: false })),
+                confirmText: "OK",
+                showCancel: false
+            });
         } finally {
             setIsSearching(false);
         }
@@ -212,6 +285,17 @@ export default function LocationMap() {
                 onConfirm={handleSuccessClose}
                 confirmText="Great"
                 type="success"
+            />
+
+            {/* Generic Alert Modal */}
+            <CustomModal
+                visible={alertConfig.visible}
+                title={alertConfig.title}
+                message={alertConfig.message}
+                onConfirm={alertConfig.onConfirm}
+                onCancel={alertConfig.showCancel ? () => setAlertConfig(prev => ({ ...prev, visible: false })) : undefined}
+                confirmText={alertConfig.confirmText}
+                type={alertConfig.type}
             />
 
             {/* Unified Search Container */}

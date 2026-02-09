@@ -21,6 +21,8 @@ interface UserSettings {
     notifications: boolean;
     darkMode: boolean;
     locationSharing: boolean;
+    acceptCashOrders: boolean;
+    isStoreOpen: boolean;
 }
 
 interface UserContextType {
@@ -49,6 +51,8 @@ const defaultSettings: UserSettings = {
     notifications: true,
     darkMode: false,
     locationSharing: true,
+    acceptCashOrders: false,
+    isStoreOpen: true,
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);

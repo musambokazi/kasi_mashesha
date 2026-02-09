@@ -24,8 +24,8 @@ export default function RootLayout() {
           >
             {/* ... Screens ... */}
             <Stack.Screen name="index" options={{ title: "Welcome", headerShown: false }} />
-            <Stack.Screen name="log_in" options={{ title: "Login" }} />
-            <Stack.Screen name="register" options={{ title: "Register" }} />
+            <Stack.Screen name="log_in" options={{ title: "Login", headerShown: false }} />
+            <Stack.Screen name="register" options={{ title: "Register", headerShown: false }} />
             <Stack.Screen name="client/home" options={{ title: "Kasi Mashesha" }} />
             <Stack.Screen name="client/shop/[id]" options={{ title: "Shop Menu" }} />
             <Stack.Screen name="client/cart" options={{ title: "My Cart" }} />

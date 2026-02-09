@@ -52,8 +52,8 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                 attribution: '© OpenStreetMap'
             }).addTo(map);
 
-            var markers = [];
-            var routeLine = null;
+            window.markers = [];
+            window.routeLine = null;
 
             // Icons
             var LeafIcon = L.Icon.extend({
@@ -92,42 +92,51 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                 }
             });
 
-            function updateMap(data) {
-                // Clear existing
-                markers.forEach(m => map.removeLayer(m));
-                markers = [];
-                if (routeLine) map.removeLayer(routeLine);
+            window.updateMap = function(data) {
+                // Clear existing markers
+                if (window.markers) {
+                    window.markers.forEach(m => map.removeLayer(m));
+                }
+                window.markers = [];
+                
+                if (window.routeLine) {
+                    map.removeLayer(window.routeLine);
+                    window.routeLine = null;
+                }
 
                 // Add Markers
                 if (data.markers) {
                     data.markers.forEach(m => {
                         var marker = L.marker([m.latitude, m.longitude], {icon: defaultIcon}).addTo(map);
-                        if (m.title) marker.bindPopup(m.title); // Simple popup
-                        markers.push(marker);
+                        if (m.title) marker.bindPopup(m.title);
+                        window.markers.push(marker);
                     });
                 }
 
                 // Add Route
                 if (data.routeCoordinates && data.routeCoordinates.length > 0) {
                     var latlngs = data.routeCoordinates.map(c => [c.latitude, c.longitude]);
-                    routeLine = L.polyline(latlngs, {color: 'blue'}).addTo(map);
-                    map.fitBounds(routeLine.getBounds(), {padding: [50, 50]});
+                    window.routeLine = L.polyline(latlngs, {color: 'blue'}).addTo(map);
+                    map.fitBounds(window.routeLine.getBounds(), {padding: [50, 50]});
                 }
 
                 // Center Map
                 if (data.mapCenter) {
-                    map.setView([data.mapCenter.latitude, data.mapCenter.longitude], 15);
+                    // Use flyTo for smoother animation
+                    map.flyTo([data.mapCenter.latitude, data.mapCenter.longitude], 15, {
+                        animate: true,
+                        duration: 1.5
+                    });
                 }
-            }
+            };
 
             // Listen for RN messages
             document.addEventListener("message", function(event) {
-                updateMap(JSON.parse(event.data));
+                if (window.updateMap) window.updateMap(JSON.parse(event.data));
             });
             
-            // Allow window.postMessage for iOS
             window.addEventListener("message", function(event) {
-                 updateMap(JSON.parse(event.data));
+                 if (window.updateMap) window.updateMap(JSON.parse(event.data));
             });
 
         </script>
@@ -143,8 +152,12 @@ export default function LeafletMap({ initialRegion, markers = [], routeCoordinat
                 routeCoordinates,
                 mapCenter
             };
-            webViewRef.current.postMessage(JSON.stringify(data));
-            webViewRef.current.injectJavaScript(`updateMap(${JSON.stringify(data)})`);
+            const script = `
+                if (window.updateMap) {
+                    window.updateMap(${JSON.stringify(data)});
+                }
+            `;
+            webViewRef.current.injectJavaScript(script);
         }
     }, [markers, routeCoordinates, mapCenter]);
 
