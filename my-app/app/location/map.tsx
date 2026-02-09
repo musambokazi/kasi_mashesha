@@ -17,7 +17,18 @@ export default function LocationMap() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const isPicking = params.picking === 'true';
-    const { setDeliveryAddress } = useCart();
+    const { setDeliveryAddress, setTip, cartItems } = useCart();
+
+    // Calculate subtotal for percentage calculation
+    const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+
+    // Tipping states
+    const [selectedTipPercentage, setSelectedTipPercentage] = useState<number>(0);
+    const [isCustomTip, setIsCustomTip] = useState(false);
+    const [customTip, setCustomTip] = useState('');
+
+    // Preset percentages
+    const presetPercentages = [0, 5, 10, 15, 20];
 
     const [modalVisible, setModalVisible] = useState(false);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
@@ -87,6 +98,13 @@ export default function LocationMap() {
         setSuccessModalVisible(false);
         const addressToSave = selectedAddress || `Lat: ${selectedLocation.latitude.toFixed(4)}, Lng: ${selectedLocation.longitude.toFixed(4)}`;
         setDeliveryAddress(addressToSave);
+
+        // Set the tip
+        const finalTip = isCustomTip
+            ? (parseFloat(customTip) || 0)
+            : (subtotal * selectedTipPercentage / 100);
+        setTip(finalTip);
+
         router.back();
     };
 
@@ -252,6 +270,67 @@ export default function LocationMap() {
             <View style={styles.footer}>
                 <Text style={styles.addressLabel}>Selected Address</Text>
                 <Text style={styles.addressValue} numberOfLines={2}>{selectedAddress}</Text>
+
+                {isPicking && (
+                    <View style={styles.tippingContainer}>
+                        <Text style={styles.tippingTitle}>Add a Tip for Driver</Text>
+                        <View style={styles.tipOptionsRow}>
+                            {presetPercentages.map((percentage) => {
+                                const tipAmount = (subtotal * percentage) / 100;
+                                return (
+                                    <TouchableOpacity
+                                        key={percentage}
+                                        style={[
+                                            styles.tipButton,
+                                            !isCustomTip && selectedTipPercentage === percentage && styles.tipButtonSelected
+                                        ]}
+                                        onPress={() => {
+                                            setIsCustomTip(false);
+                                            setSelectedTipPercentage(percentage);
+                                            setCustomTip('');
+                                        }}
+                                    >
+                                        <Text style={[
+                                            styles.tipButtonText,
+                                            !isCustomTip && selectedTipPercentage === percentage && styles.tipButtonTextSelected
+                                        ]}>
+                                            {percentage === 0 ? 'None' : `${percentage}% (R${tipAmount.toFixed(0)})`}
+                                        </Text>
+                                    </TouchableOpacity>
+                                )
+                            })}
+                            <TouchableOpacity
+                                style={[styles.tipButton, isCustomTip && styles.tipButtonSelected]}
+                                onPress={() => {
+                                    setIsCustomTip(true);
+                                    setSelectedTipPercentage(0);
+                                }}
+                            >
+                                <Text style={[styles.tipButtonText, isCustomTip && styles.tipButtonTextSelected]}>Custom</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {isCustomTip && (
+                            <View style={styles.customTipContainer}>
+                                <Text style={styles.currencyPrefix}>R</Text>
+                                <TextInput
+                                    style={styles.customTipInput}
+                                    placeholder="0.00"
+                                    keyboardType="numeric"
+                                    value={customTip}
+                                    onChangeText={setCustomTip}
+                                />
+                            </View>
+                        )}
+
+                        <Text style={styles.summaryText}>
+                            Tip Amount: R{isCustomTip
+                                ? (parseFloat(customTip) || 0).toFixed(2)
+                                : ((subtotal * selectedTipPercentage) / 100).toFixed(2)}
+                        </Text>
+                    </View>
+                )}
+
                 <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPress}>
                     <Text style={styles.confirmButtonText}>
                         {isPicking ? 'CONFIRM DELIVERY LOCATION' : 'CONFIRM LOCATION'}
@@ -269,7 +348,7 @@ const styles = StyleSheet.create({
     },
     mapContainer: {
         flex: 1,
-        marginBottom: 180,
+        marginBottom: 340, // Increased for tipping
     },
     searchContainer: {
         position: 'absolute',
@@ -342,7 +421,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 0,
         width: '100%',
-        height: 180,
+        height: 340, // Increased for tipping
         backgroundColor: '#FFFFFF',
         padding: 20,
         borderTopLeftRadius: 25,
@@ -362,8 +441,69 @@ const styles = StyleSheet.create({
         color: '#333',
         fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 20,
+        marginBottom: 10,
         minHeight: 40, // Ensure space even while loading
+    },
+    tippingContainer: {
+        marginBottom: 15,
+    },
+    tippingTitle: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginBottom: 8,
+        color: '#333',
+    },
+    tipOptionsRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+    },
+    tipButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 12,
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        backgroundColor: '#F5F5F5',
+    },
+    tipButtonSelected: {
+        backgroundColor: '#006400',
+        borderColor: '#006400',
+    },
+    tipButtonText: {
+        fontSize: 12,
+        color: '#333',
+    },
+    tipButtonTextSelected: {
+        color: '#FFFFFF',
+        fontWeight: 'bold',
+    },
+    customTipContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        height: 40,
+        marginBottom: 8,
+    },
+    currencyPrefix: {
+        fontSize: 16,
+        color: '#333',
+        marginRight: 5,
+    },
+    customTipInput: {
+        flex: 1,
+        fontSize: 16,
+        color: '#333',
+    },
+    summaryText: {
+        fontSize: 14,
+        color: '#006400', // Dark Green to match theme
+        fontWeight: 'bold',
+        textAlign: 'right',
+        marginBottom: 5,
     },
     confirmButton: {
         backgroundColor: '#006400',
