@@ -17,21 +17,11 @@ export default function LocationMap() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const isPicking = params.picking === 'true';
-    const { setDeliveryAddress, setTip, cartItems } = useCart();
-
-    // Calculate subtotal for percentage calculation
-    const subtotal = cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-
-    // Tipping states
-    const [selectedTipPercentage, setSelectedTipPercentage] = useState<number>(0);
-    const [isCustomTip, setIsCustomTip] = useState(false);
-    const [customTip, setCustomTip] = useState('');
-
-    // Preset percentages
-    const presetPercentages = [0, 5, 10, 15, 20];
+    const { setDeliveryAddress, setTipAmount } = useCart();
 
     const [modalVisible, setModalVisible] = useState(false);
     const [successModalVisible, setSuccessModalVisible] = useState(false);
+    const [tipModalVisible, setTipModalVisible] = useState(false);
 
     const [alertConfig, setAlertConfig] = useState({
         visible: false,
@@ -115,15 +105,16 @@ export default function LocationMap() {
 
     const handleSuccessClose = () => {
         setSuccessModalVisible(false);
+        // Show Tip Modal after success
+        setTipModalVisible(true);
+    };
+
+    const handleTipSelection = (amount: number) => {
+        setTipAmount(amount);
+        setTipModalVisible(false);
+
         const addressToSave = selectedAddress || `Lat: ${selectedLocation.latitude.toFixed(4)}, Lng: ${selectedLocation.longitude.toFixed(4)}`;
         setDeliveryAddress(addressToSave);
-
-        // Set the tip
-        const finalTip = isCustomTip
-            ? (parseFloat(customTip) || 0)
-            : (subtotal * selectedTipPercentage / 100);
-        setTip(finalTip);
-
         router.back();
     };
 
@@ -381,66 +372,6 @@ export default function LocationMap() {
             <View style={styles.footer}>
                 <Text style={styles.addressLabel}>Selected Address</Text>
                 <Text style={styles.addressValue} numberOfLines={2}>{selectedAddress}</Text>
-
-                {isPicking && (
-                    <View style={styles.tippingContainer}>
-                        <Text style={styles.tippingTitle}>Add a Tip for Driver</Text>
-                        <View style={styles.tipOptionsRow}>
-                            {presetPercentages.map((percentage) => {
-                                const tipAmount = (subtotal * percentage) / 100;
-                                return (
-                                    <TouchableOpacity
-                                        key={percentage}
-                                        style={[
-                                            styles.tipButton,
-                                            !isCustomTip && selectedTipPercentage === percentage && styles.tipButtonSelected
-                                        ]}
-                                        onPress={() => {
-                                            setIsCustomTip(false);
-                                            setSelectedTipPercentage(percentage);
-                                            setCustomTip('');
-                                        }}
-                                    >
-                                        <Text style={[
-                                            styles.tipButtonText,
-                                            !isCustomTip && selectedTipPercentage === percentage && styles.tipButtonTextSelected
-                                        ]}>
-                                            {percentage === 0 ? 'None' : `${percentage}% (R${tipAmount.toFixed(0)})`}
-                                        </Text>
-                                    </TouchableOpacity>
-                                )
-                            })}
-                            <TouchableOpacity
-                                style={[styles.tipButton, isCustomTip && styles.tipButtonSelected]}
-                                onPress={() => {
-                                    setIsCustomTip(true);
-                                    setSelectedTipPercentage(0);
-                                }}
-                            >
-                                <Text style={[styles.tipButtonText, isCustomTip && styles.tipButtonTextSelected]}>Custom</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {isCustomTip && (
-                            <View style={styles.customTipContainer}>
-                                <Text style={styles.currencyPrefix}>R</Text>
-                                <TextInput
-                                    style={styles.customTipInput}
-                                    placeholder="0.00"
-                                    keyboardType="numeric"
-                                    value={customTip}
-                                    onChangeText={setCustomTip}
-                                />
-                            </View>
-                        )}
-
-                        <Text style={styles.summaryText}>
-                            Tip Amount: R{isCustomTip
-                                ? (parseFloat(customTip) || 0).toFixed(2)
-                                : ((subtotal * selectedTipPercentage) / 100).toFixed(2)}
-                        </Text>
-                    </View>
-                )}
 
                 <TouchableOpacity style={styles.confirmButton} onPress={handleConfirmPress}>
                     <Text style={styles.confirmButtonText}>
