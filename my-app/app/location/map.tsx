@@ -283,9 +283,36 @@ export default function LocationMap() {
                 title="Location Pinned!"
                 message="The driver will find you exactly here."
                 onConfirm={handleSuccessClose}
-                confirmText="Great"
+                confirmText="Add Driver Tip"
                 type="success"
             />
+
+            {/* Tip Selection Modal */}
+            <CustomModal
+                visible={tipModalVisible}
+                title="Tip Your Runner?"
+                message="100% of the tip goes to the driver."
+                onConfirm={() => handleTipSelection(0)} // Treat confirm (default button) as "Skip" if we want, or hide standard buttons
+                onCancel={() => handleTipSelection(0)}
+                confirmText="No Tip"
+                cancelText="Skip" // Actually let's use custom children for tip options
+                icon="cash"
+            >
+                <View style={styles.tipContainer}>
+                    {[5, 10, 20, 30].map((amount) => (
+                        <TouchableOpacity
+                            key={amount}
+                            style={styles.tipButton}
+                            onPress={() => handleTipSelection(amount)}
+                        >
+                            <Text style={styles.tipButtonText}>R{amount}</Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+                <TouchableOpacity onPress={() => handleTipSelection(0)} style={styles.skipTipButton}>
+                    <Text style={styles.skipTipText}>Skip for now</Text>
+                </TouchableOpacity>
+            </CustomModal>
 
             {/* Generic Alert Modal */}
             <CustomModal
@@ -539,5 +566,35 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
         letterSpacing: 1,
+    },
+    tipContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginBottom: 15,
+        gap: 10,
+    },
+    tipButton: {
+        flex: 1,
+        backgroundColor: '#F0F0F0',
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#E0E0E0',
+    },
+    tipButtonText: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    skipTipButton: {
+        padding: 10,
+        alignItems: 'center',
+    },
+    skipTipText: {
+        color: '#757575',
+        fontSize: 14,
+        textDecorationLine: 'underline',
     },
 });
